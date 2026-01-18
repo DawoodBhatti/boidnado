@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://cddf4ict73b43"]
+
+[sub_resource type="Sky" id="Sky_0vuym"]
+
+[sub_resource type="Environment" id="Environment_dalyv"]
+background_mode = 1
+background_color = Color(1, 1, 1, 1)
+background_energy_multiplier = 0.87
+sky = SubResource("Sky_0vuym")
+reflected_light_source = 2
+
+[node name="RootMaster" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_dalyv")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 289.00958, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -171.38919, 103.08981, 0)
