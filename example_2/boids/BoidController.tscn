@@ -1,0 +1,11 @@
+[gd_scene load_steps=4 format=3 uid="uid://s7kltapovph5"]
+
+[ext_resource type="PackedScene" uid="uid://bi32ch1fqvoeo" path="res://example_2/boids/rendering/BoidRenderer.tscn" id="1_csfis"]
+[ext_resource type="Script" uid="uid://b45xoyuka4bxy" path="res://example_2/boids/BoidController.gd" id="1_xmurr"]
+[ext_resource type="ArrayMesh" uid="uid://p4uwilucaewc" path="res://example_2/boids/models/boid.obj" id="2_mahqb"]
+
+[node name="BoidController" type="Node"]
+script = ExtResource("1_xmurr")
+boid_mesh = ExtResource("2_mahqb")
+
+[node name="BoidRenderer" parent="." instance=ExtResource("1_csfis")]

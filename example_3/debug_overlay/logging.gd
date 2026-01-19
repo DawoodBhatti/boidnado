@@ -55,7 +55,7 @@ func log_results(FPS: Label, CPU: Label, RAM: Label, Draws: Label, BoidCount: La
 	samples["CPU"].append(_parse_float_ms_label(CPU.text))
 	samples["RAM"].append(_parse_float_label(RAM.text))
 	samples["Draws"].append(_parse_int_label(Draws.text))
-	samples["BoidCount"].append(BoidCount.text)
+	samples["BoidCount"].append(_parse_int_label(BoidCount.text))
 
 
 # ---------------------------------------------------------

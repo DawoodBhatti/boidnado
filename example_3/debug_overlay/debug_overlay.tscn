@@ -1,10 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://cfqmbkjqwc2w3"]
+[gd_scene load_steps=3 format=3 uid="uid://ducw14ovc1w2e"]
 
-[ext_resource type="Script" uid="uid://hkbymbvptx0p" path="res://example_1/debug_overlay/debug_overlay.gd" id="1_kl0k5"]
-[ext_resource type="Script" uid="uid://bqkepq6qjqgmd" path="res://example_1/debug_overlay/logging.gd" id="2_7q46q"]
+[ext_resource type="Script" uid="uid://53eqhypnlal0" path="res://example_3/debug_overlay/debug_data_overlay.gd" id="1_67262"]
+[ext_resource type="Script" uid="uid://o0hbguk1gab3" path="res://example_3/debug_overlay/logging.gd" id="2_l5hab"]
 
 [node name="DebugOverlay" type="CanvasLayer"]
-script = ExtResource("1_kl0k5")
+script = ExtResource("1_67262")
 
 [node name="VboxContainer" type="VBoxContainer" parent="."]
 offset_right = 333.0
@@ -37,4 +37,4 @@ theme_override_font_sizes/font_size = 32
 text = "Vertex count:"
 
 [node name="Logging" type="Node" parent="."]
-script = ExtResource("2_7q46q")
+script = ExtResource("2_l5hab")

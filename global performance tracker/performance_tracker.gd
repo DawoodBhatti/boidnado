@@ -1,6 +1,6 @@
 extends Node
 
-var global_path: String = "res://performance tracking/global_performance_log.json"
+var global_path: String = "res://global performance tracker/global_performance_log.json"
 var global_results: Dictionary = {}
 
 func _ready() -> void:

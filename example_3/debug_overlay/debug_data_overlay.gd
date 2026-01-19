@@ -11,6 +11,7 @@ var BoidCount: Label
 
 
 @onready var logger: Node = $Logging
+@onready var BoidController : Node = $"../BoidController"
 
 
 func _ready() -> void:
@@ -21,8 +22,6 @@ func _ready() -> void:
 	Draws = $VboxContainer/Draws
 	BoidCount = $VboxContainer/BoidCount
 
-	# Compute BoidCount count. 0 at project start
-	BoidCount.text = "Boid count: %d" % 0.0
 
 func _process(delta: float) -> void:
 	time_accum += delta
@@ -36,11 +35,13 @@ func _update_stats() -> void:
 	var mem_peak: float = OS.get_static_memory_peak_usage() / (1024.0 * 1024.0)
 	var cpu_time: float = Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
 	var draw_calls: int = Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
+	var number_boids: int = BoidController.boid_count
 
 	FPS.text = "FPS: %d" % fps
 	CPU.text = "CPU frame time: %.2f ms" % cpu_time
 	RAM.text = "RAM: %.2f MB (peak %.2f MB)" % [mem, mem_peak]
 	Draws.text = "Draw Calls: %d" % draw_calls
+	BoidCount.text = "Boid Count: %d" % number_boids
 
 	# FPS color
 	if fps < 55:

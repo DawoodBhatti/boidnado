@@ -1,0 +1,43 @@
+[gd_scene load_steps=8 format=3 uid="uid://cddf4ict73b43"]
+
+[ext_resource type="Script" uid="uid://cm1lqbln8w1k1" path="res://example_1/main.gd" id="1_6e2xo"]
+[ext_resource type="PackedScene" uid="uid://cfqmbkjqwc2w3" path="res://example_1/debug_overlay/debug_overlay.tscn" id="1_h44bd"]
+[ext_resource type="PackedScene" uid="uid://bww5xub8y0ndd" path="res://example_1/player/player.tscn" id="2_6e2xo"]
+[ext_resource type="PackedScene" uid="uid://c4x6rkwhcowku" path="res://example_1/floor/floor.tscn" id="4_ncaqu"]
+
+[sub_resource type="Sky" id="Sky_0vuym"]
+
+[sub_resource type="Environment" id="Environment_dalyv"]
+background_mode = 1
+background_color = Color(1, 1, 1, 1)
+background_energy_multiplier = 0.87
+sky = SubResource("Sky_0vuym")
+reflected_light_source = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ncaqu"]
+albedo_color = Color(0.38431373, 0.5254902, 0.89411765, 1)
+
+[node name="RootMaster" type="Node3D"]
+script = ExtResource("1_6e2xo")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_dalyv")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 289.00958, 0)
+
+[node name="DebugOverlay" parent="." instance=ExtResource("1_h44bd")]
+
+[node name="Player" parent="." instance=ExtResource("2_6e2xo")]
+
+[node name="FakeFloor" type="CSGBox3D" parent="."]
+visible = false
+size = Vector3(25, 2, 25)
+material = SubResource("StandardMaterial3D_ncaqu")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+
+[node name="Floor" parent="." instance=ExtResource("4_ncaqu")]
+floor_width = 20.0
+floor_depth = 20.0
+floor_height = 20.0
