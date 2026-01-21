@@ -1,0 +1,23 @@
+[gd_scene load_steps=8 format=3 uid="uid://cl8n2fb2lhdlo"]
+
+[ext_resource type="Script" uid="uid://ejjwf5yafmw3" path="res://example_4/boids/controller/BoidController.gd" id="1_evow2"]
+[ext_resource type="ArrayMesh" uid="uid://bfap08g5kmkah" path="res://example_4/boids/models/boid.obj" id="2_exc83"]
+[ext_resource type="PackedScene" uid="uid://bdiqccrbqtwex" path="res://example_4/boids/rendering/BoidRenderer.tscn" id="3_mac86"]
+[ext_resource type="PackedScene" uid="uid://oo21blxu0d3c" path="res://example_4/boids/world grid/BoidsGrid.tscn" id="4_08jx2"]
+[ext_resource type="PackedScene" uid="uid://0v5h31b3yo7l" path="res://example_4/boids/behaviours/BoidBehaviours.tscn" id="5_3cotx"]
+[ext_resource type="PackedScene" uid="uid://cq5wesd2e0u3g" path="res://example_4/boids/debug/BoidsDebugOverlay.tscn" id="6_5ra52"]
+[ext_resource type="PackedScene" uid="uid://yn0foas4qdws" path="res://example_4/boids/cage/BoidCage.tscn" id="7_08jx2"]
+
+[node name="BoidController" type="Node3D"]
+script = ExtResource("1_evow2")
+boid_mesh = ExtResource("2_exc83")
+
+[node name="BoidRenderer" parent="." instance=ExtResource("3_mac86")]
+
+[node name="BoidBehaviours" parent="." instance=ExtResource("5_3cotx")]
+
+[node name="BoidCage" parent="." instance=ExtResource("7_08jx2")]
+
+[node name="BoidsDebugOverlay" parent="." instance=ExtResource("6_5ra52")]
+
+[node name="BoidsGrid" parent="." instance=ExtResource("4_08jx2")]

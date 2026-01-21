@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://oo21blxu0d3c"]
+
+[ext_resource type="Script" uid="uid://dup370q822jra" path="res://example_4/boids/world grid/BoidsGrid.gd" id="1_8b0ow"]
+
+[node name="BoidsGrid" type="Node3D"]
+script = ExtResource("1_8b0ow")

@@ -2,7 +2,7 @@ extends Node
 
 @export var boid_count: int = 30
 @export var alignment_weight: float = 1.0
-@export var neighbour_radius: float = 10.0
+@export var sight_radius: float = 10.0
 
 @export var max_speed: float = 30.0
 @export var cohesion_weight: float = 1.0
@@ -53,7 +53,7 @@ func _init_data() -> void:
 		accelerations[i] = Vector3.ZERO
 
 func _init_grid() -> void:
-	grid.cell_size = neighbour_radius
+	grid.cell_size = sight_radius
 
 func _init_renderer() -> void:
 	renderer = get_node_or_null(renderer_path)
@@ -70,7 +70,7 @@ func _physics_process(delta: float) -> void:
 
 	# 3. apply behaviours
 	for i in positions.size():
-		var neighbours : PackedInt32Array = grid.get_neighbours(i, positions, velocities, neighbour_radius)
+		var neighbours : PackedInt32Array = grid.get_neighbours(i, positions, velocities, sight_radius)
 		behaviours.apply_alignment(
 			i,
 			positions,

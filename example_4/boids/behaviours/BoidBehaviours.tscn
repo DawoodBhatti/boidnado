@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://0v5h31b3yo7l"]
+
+[ext_resource type="Script" uid="uid://cwouqig2u7uji" path="res://example_4/boids/behaviours/BoidBehaviours.gd" id="1_qowsh"]
+
+[node name="BoidBehaviours" type="Node3D"]
+script = ExtResource("1_qowsh")

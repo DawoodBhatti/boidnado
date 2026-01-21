@@ -1,0 +1,40 @@
+[gd_scene load_steps=3 format=3 uid="uid://5ix4n2kvc3jp"]
+
+[ext_resource type="Script" uid="uid://cx4oj2lcalmbx" path="res://example_4/debug_overlay/debug_data_overlay.gd" id="1_4ltj0"]
+[ext_resource type="Script" uid="uid://dw0qij61gt36x" path="res://example_4/debug_overlay/logging.gd" id="2_ub38e"]
+
+[node name="DebugOverlay" type="CanvasLayer"]
+script = ExtResource("1_4ltj0")
+
+[node name="VboxContainer" type="VBoxContainer" parent="."]
+offset_right = 333.0
+offset_bottom = 129.0
+
+[node name="FPS" type="Label" parent="VboxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 32
+text = "FPS:"
+
+[node name="CPU" type="Label" parent="VboxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "CPU frame time:"
+
+[node name="RAM" type="Label" parent="VboxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "RAM:"
+
+[node name="Draws" type="Label" parent="VboxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Draw calls:"
+
+[node name="BoidCount" type="Label" parent="VboxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Vertex count:"
+
+[node name="Logging" type="Node" parent="."]
+script = ExtResource("2_ub38e")

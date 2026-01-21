@@ -56,7 +56,7 @@ func _physics_process(delta):
 	if Input.is_action_pressed("shift"):
 		velocity.y -= VERTICAL_THRUST * delta
 
-	if Input.is_action_pressed("spacebar"):
+	if Input.is_action_pressed("jump"):
 		velocity.y += VERTICAL_THRUST * delta
 
 	# -------------------------------------
