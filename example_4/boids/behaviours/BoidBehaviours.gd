@@ -1,5 +1,6 @@
 extends Node3D 
 
+#match velocities of nearby neighbours
 static func apply_alignment(
 	i: int,
 	positions: PackedVector3Array,
@@ -19,7 +20,7 @@ static func apply_alignment(
 	var steer := (avg_vel - velocities[i])
 	accelerations[i] += steer * weight
 
-
+#steer toward center of nearby flock
 static func apply_cohesion(
 	i: int,
 	positions: PackedVector3Array,
@@ -40,6 +41,7 @@ static func apply_cohesion(
 	accelerations[i] += desired * weight
 
 
+#avoid collision with nearby neighbours
 static func apply_separation(
 	i: int,
 	positions: PackedVector3Array,
@@ -66,7 +68,7 @@ static func apply_separation(
 		steer /= float(count)
 		accelerations[i] += steer * weight
 
-
+#random wander
 static func apply_wander(
 	i: int,
 	velocities: PackedVector3Array,
@@ -82,3 +84,36 @@ static func apply_wander(
 
 	# Scale by strength
 	accelerations[i] += rand_vec * wander_strength
+
+#apply potential force
+# if we apply outside the cage 
+static func apply_boundary_potential(
+	i: int,
+	positions: PackedVector3Array,
+	velocities: PackedVector3Array,
+	accelerations: PackedVector3Array,
+	cage_radius: float,
+	weight: float,
+) -> void:
+	var pos: Vector3 = positions[i]
+	var dist: float = pos.length()
+
+	# Start applying force only after the radius
+	if dist < cage_radius:
+		return
+
+	var normal: Vector3 = pos.normalized()
+	var margin: float = dist - cage_radius
+	margin = max(margin, 0.001)
+	
+	#print("boid[i]: ", i)
+	#print("boid pos: ", pos)
+	#print("cage_radius: ", cage_radius)
+	#print("dist: ", dist)
+	#print("boid margin: ", margin)
+	#print("")
+
+	var strength: float = weight * margin
+	var inward: Vector3 = -normal
+
+	accelerations[i] += inward * strength

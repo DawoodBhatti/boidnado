@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://casr1xyd2m32"]
+
+[ext_resource type="Script" uid="uid://dm0r1n611q7ru" path="res://example_5/boids/world cells/BoidsWorldCells.gd" id="1_owsl6"]
+
+[node name="BoidsWorldCells" type="Node3D"]
+script = ExtResource("1_owsl6")

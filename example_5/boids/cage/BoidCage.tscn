@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bsbvfvmnsvxbm"]
+
+[ext_resource type="Script" uid="uid://dp4rm6inmvkh4" path="res://example_5/boids/cage/BoidCage.gd" id="1_vouui"]
+
+[node name="BoidCage" type="Node3D"]
+script = ExtResource("1_vouui")

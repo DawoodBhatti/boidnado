@@ -6,17 +6,18 @@ extends Node3D
 
 @export var boid_count: int = 350
 @export var cell_size: float = 4.0
-@export var sight_radius: float = 8.0
-@export var cage_radius: float = cell_size * 90
-@export var max_speed: float = 10.0
-@export var desired_separation: float = 144.0
+@export var sight_radius: float = 5.0
+@export var cage_radius: float = cell_size * 10
+@export var max_speed: float = 25.0
+@export var desired_separation: float = 0.5
 @export var boid_mesh: Mesh
 @export var renderer_path: NodePath = "BoidRenderer"
 
-@export var alignment_weight: float = 1.5
-@export var cohesion_weight: float = 0.01
-@export var separation_weight: float = 1.5
-@export var wander_strength: float = 0.5
+@export var alignment_weight: float = 1.1
+@export var cohesion_weight: float = 4.5
+@export var separation_weight: float = 4.00
+@export var wander_strength: float = 2.00
+@export var boundary_strength: float = 0.9
 
 # ---------------------------------------------------------
 # Internal State
@@ -75,7 +76,8 @@ func _init_data() -> void:
 		"alignment": alignment_weight,
 		"cohesion": cohesion_weight,
 		"separation": separation_weight,
-		"wander": wander_strength
+		"wander": wander_strength,
+		"boundary": boundary_strength
 	}
 
 	limits = {
@@ -147,22 +149,27 @@ func _simulate_boids(delta: float) -> void:
 
 	grid.rebuild(positions)
 
+	#calculate 'forces' from behaviours
 	for i in positions.size():
 		var neighbours: PackedInt32Array = grid.get_neighbours(i, positions, velocities, limits["sight_radius"])
 		behaviours.apply_alignment(i, positions, velocities, accelerations, neighbours, weights["alignment"])
 		behaviours.apply_cohesion(i, positions, velocities, accelerations, neighbours, weights["cohesion"])
 		behaviours.apply_separation(i, positions, velocities, accelerations, neighbours, limits["desired_separation"], weights["separation"])
 		behaviours.apply_wander(i, velocities, accelerations, weights["wander"])
+		behaviours.apply_boundary_potential(i, positions, velocities, accelerations, cage_radius, weights["boundary"])
 
+	#apply forces to acceleration to calculate new position and velocity
 	for i in positions.size():
 		velocities[i] += accelerations[i] * delta
 		if velocities[i].length() > limits["max_speed"]:
 			velocities[i] = velocities[i].normalized() * limits["max_speed"]
 		positions[i] += velocities[i] * delta
 
+
 func _update_renderer() -> void:
 	if renderer:
 		renderer.update_transforms(positions, velocities)
+
 
 func _update_debug_overlay() -> void:
 	if debug:

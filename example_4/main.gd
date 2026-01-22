@@ -9,11 +9,17 @@ func _ready() -> void:
 	#offset to sit on ground
 	Player.position.y += 1.5
 	print("Example 4: boid cage + bug fixes")
-	#neighbour bug fixing
-	#velocity vector fixing
+	print("Example 4: electrons orbiting atom?")
+	
+	
 	#Example 5+
 	#bounding behaviour
 	#data layer
 	#GPU
 	#double buffering optimisation/implementation
 	#marching cubes!
+
+
+	#things to keep an eye on:
+	#velocity vector mesh mismatch...
+	#apply forces one by one and investigate!

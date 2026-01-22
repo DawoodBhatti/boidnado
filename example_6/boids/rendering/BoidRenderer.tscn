@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://llqgfav0a857"]
+
+[ext_resource type="Script" uid="uid://chr02m26r3l6f" path="res://example_6/boids/rendering/BoidRenderer.gd" id="1_erd4a"]
+
+[node name="BoidRenderer" type="MultiMeshInstance3D"]
+script = ExtResource("1_erd4a")

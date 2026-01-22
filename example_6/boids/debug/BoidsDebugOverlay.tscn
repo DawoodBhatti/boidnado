@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cx4gpur6kxogl"]
+
+[ext_resource type="Script" uid="uid://ddv6iga1dtgm7" path="res://example_6/boids/debug/BoidsDebugOverlay.gd" id="1_5b8o0"]
+
+[node name="BoidsDebugOverlay" type="Node3D"]
+script = ExtResource("1_5b8o0")

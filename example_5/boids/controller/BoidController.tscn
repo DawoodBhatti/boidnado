@@ -1,0 +1,28 @@
+[gd_scene load_steps=9 format=3 uid="uid://dyj5r8ces11r1"]
+
+[ext_resource type="Script" uid="uid://cyacnnbhygj1j" path="res://example_5/boids/controller/BoidController.gd" id="1_oxml6"]
+[ext_resource type="PackedScene" uid="uid://bc4cyb75xkhc4" path="res://example_5/boids/rendering/BoidRenderer.tscn" id="3_v640i"]
+[ext_resource type="PackedScene" uid="uid://btv6cmfsqssqc" path="res://example_5/boids/behaviours/BoidBehaviours.tscn" id="4_nrc4v"]
+[ext_resource type="PackedScene" uid="uid://bsbvfvmnsvxbm" path="res://example_5/boids/cage/BoidCage.tscn" id="5_12t1c"]
+[ext_resource type="PackedScene" uid="uid://brvv2lftyytgw" path="res://example_5/boids/debug/BoidsDebugOverlay.tscn" id="6_7i0rh"]
+[ext_resource type="PackedScene" uid="uid://casr1xyd2m32" path="res://example_5/boids/world cells/BoidsWorldCells.tscn" id="7_2wvuw"]
+[ext_resource type="Script" uid="uid://dxh4073ugm453" path="res://example_5/boids/config/BoidConfigHandler.gd" id="7_oxml6"]
+[ext_resource type="PackedScene" uid="uid://d3l7oe64n8sof" path="res://example_5/boids/data/BoidData.tscn" id="8_hemy2"]
+
+[node name="BoidController" type="Node3D"]
+script = ExtResource("1_oxml6")
+
+[node name="BoidRenderer" parent="." instance=ExtResource("3_v640i")]
+
+[node name="BoidBehaviours" parent="." instance=ExtResource("4_nrc4v")]
+
+[node name="BoidCage" parent="." instance=ExtResource("5_12t1c")]
+
+[node name="BoidsDebugOverlay" parent="." instance=ExtResource("6_7i0rh")]
+
+[node name="BoidsGrid" parent="." instance=ExtResource("7_2wvuw")]
+
+[node name="BoidConfigHandler" type="Node3D" parent="."]
+script = ExtResource("7_oxml6")
+
+[node name="BoidData" parent="." instance=ExtResource("8_hemy2")]

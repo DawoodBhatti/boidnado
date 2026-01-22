@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://4ymenbyjjkua"]
+
+[ext_resource type="Script" uid="uid://cg2bg1onetfho" path="res://example_5/boids/controller/BoidSimulationCore.gd" id="1_x0hm1"]
+[ext_resource type="Script" path="res://example_5/boids/data/CPUCompute.gd" id="2_2xnry"]
+[ext_resource type="Script" uid="uid://bqljfrniyjcex" path="res://example_5/boids/data/GPUSimulationCore.gd" id="3_gfet1"]
+
+[node name="BoidSimulationCore" type="Node3D"]
+script = ExtResource("1_x0hm1")
+
+[node name="CPUCompute" type="Node3D" parent="."]
+script = ExtResource("2_2xnry")
+
+[node name="GPUCompute" type="Node3D" parent="."]
+script = ExtResource("3_gfet1")
