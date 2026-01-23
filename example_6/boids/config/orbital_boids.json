@@ -12,5 +12,6 @@
   "wander_strength": 2.0,
   "boundary_strength": 0.9,
 
-  "boid_mesh_path": "res://example_5/boids/models/biggerboid.obj"
+  "boid_mesh_path": "res://example_5/boids/models/biggerboid.obj",
+  "boid_colour": [1.0,0.0,0.0,0.5],
 }

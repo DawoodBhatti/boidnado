@@ -10,17 +10,6 @@
 
 [node name="BoidSwarm" type="Node3D"]
 script = ExtResource("1_4sliq")
-simulation_core = null
-boid_count = null
-cell_size = null
-sight_radius = null
-max_speed = null
-desired_separation = null
-alignment_weight = null
-cohesion_weight = null
-separation_weight = null
-wander_strength = null
-boundary_strength = null
 
 [node name="BoidRenderer" parent="." instance=ExtResource("2_lun5f")]
 

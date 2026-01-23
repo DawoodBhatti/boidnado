@@ -7,3 +7,5 @@
 script = ExtResource("1_ufbvi")
 
 [node name="Swarm1" parent="." instance=ExtResource("2_ysmyh")]
+
+[node name="Swarm2" parent="." instance=ExtResource("2_ysmyh")]

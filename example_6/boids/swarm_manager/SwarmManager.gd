@@ -6,11 +6,11 @@ var step_mode := false
 var step_counter := 0
 var boid_count : int = 0
 
-@export var swarm1_config : String = "orbital_boids.json"
+@export var swarm1_config : String = "default.json"
 var swarm1_use_config := true
 var swarm1_params : Dictionary
 
-@export var swarm2_config : String = ".json"
+@export var swarm2_config : String = ""
 var swarm2_use_config := false
 var swarm2_params : Dictionary
 
@@ -18,11 +18,9 @@ var swarm2_params : Dictionary
 
 
 func _ready() -> void:
-	print("SwarmManager ready")
-
 	swarm1_params = _extract_config_params(swarm1_config)
 	swarm2_params = _manually_set_params()
-
+	boid_count = swarm1_params["boid_count"]+swarm2_params["boid_count"]
 	_initialize_all_swarms()
 
 
@@ -32,19 +30,22 @@ func _ready() -> void:
 
 func _initialize_all_swarms() -> void:
 
+	print(swarm1_params)
+
 	var Swarm1 : Node3D = get_node("Swarm1")
 	Swarm1.initialize(swarm1_params)
 	swarms.append(Swarm1)
-
-	print("Initialized ", Swarm1.name, " with ", swarm1_params.boid_count, " boids")
+	
+	var Swarm2 : Node3D = get_node("Swarm2")
+	Swarm2.initialize(swarm2_params)
+	swarms.append(Swarm2)
 
 
 # ---------------------------------------------------------
-# EXTRACT PARAMS FROM CONFIG FILE (NEW STATELESS PATTERN)
+# EXTRACT PARAMS FROM CONFIG FILE (STATELESS PATTERN)
 # ---------------------------------------------------------
 
 func _extract_config_params(file_name: String) -> Dictionary:
-	# NEW: use the stateless extractor
 	return config_handler.extract_params(file_name)
 
 
@@ -53,13 +54,14 @@ func _extract_config_params(file_name: String) -> Dictionary:
 # ---------------------------------------------------------
 
 func _manually_set_params() -> Dictionary:
+	var mesh: Resource = load("res://example_6/boids/models/biggerboid.obj")
 	return {
 		"simulation_core": "CPU",
 		"boid_count": 50,
 		"cell_size": 3.0,
 		"sight_radius": 4.0,
 		"cage_radius": 30.0,
-		"max_speed": 8.0,
+		"max_speed": 48.0,
 		"desired_separation": 0.4,
 
 		"alignment_weight": 0.8,
@@ -68,7 +70,8 @@ func _manually_set_params() -> Dictionary:
 		"wander_strength": 1.0,
 		"boundary_strength": 1.0,
 
-		"boid_mesh": null
+		"boid_mesh": mesh,
+		"boid_colour": Color(0.0,0.0,1.0,0.5)
 	}
 
 
@@ -92,7 +95,8 @@ func _default_params() -> Dictionary:
 		"wander_strength": 2.0,
 		"boundary_strength": 0.9,
 
-		"boid_mesh": null
+		"boid_mesh": null,
+		"boid_colour": Color(1.0,0.0,0.0,0.5)
 	}
 
 

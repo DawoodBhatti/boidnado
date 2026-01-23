@@ -34,7 +34,15 @@ func _query_mesh_position(mesh : Mesh) -> void:
 # Setup MultiMesh
 # ---------------------------------------------------------
 
-func setup(mesh: Mesh, count: int) -> void:
+func setup(mesh: Mesh, colour: Color, count: int) -> void:
+	
+	#one colour per swarm, for now
+	var material := StandardMaterial3D.new()
+	material.albedo_color = colour
+	
+	# Apply material to the mesh
+	mesh.surface_set_material(0, material)
+	
 	var mm := MultiMesh.new()
 	mm.mesh = mesh
 	mm.transform_format = MultiMesh.TRANSFORM_3D

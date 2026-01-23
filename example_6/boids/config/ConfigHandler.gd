@@ -20,7 +20,7 @@ This guarantees:
  - No accidental cross‑swarm contamination
 """
 
-@export var debug_enabled: bool = false
+@export var debug_enabled: bool = true
 
 
 # ---------------------------------------------------------
@@ -52,7 +52,7 @@ func load_config_data(file_name: String) -> Dictionary:
 	"""
     Loads the JSON config file and returns a fresh Dictionary.
     No internal state is stored.
-    """
+	"""
 
 	var full_path := resolve_config_path(file_name)
 
@@ -111,13 +111,16 @@ func load_mesh_from_config(config: Dictionary) -> Mesh:
 
 func extract_params(file_name: String) -> Dictionary:
 
-	var config := load_config_data(file_name)
+	var config : Dictionary = load_config_data(file_name)
 
 	if config.is_empty():
 		push_warning("ConfigHandler: Config empty or failed to load.")
 		return {}
 
-	var mesh := load_mesh_from_config(config)
+	var mesh : Mesh = load_mesh_from_config(config)
+	
+	var c = config.get("boid_colour", [1,1,1,1])
+	var color = Color(c[0], c[1], c[2], c[3])
 
 	# Build the parameter dictionary expected by BoidSwarm
 	return {
@@ -135,5 +138,6 @@ func extract_params(file_name: String) -> Dictionary:
 		"wander_strength": float(config.get("wander_strength", 2.0)),
 		"boundary_strength": float(config.get("boundary_strength", 0.9)),
 
-		"boid_mesh": mesh
+		"boid_mesh": mesh,
+		"boid_colour": color,
 	}

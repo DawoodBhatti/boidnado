@@ -18,14 +18,15 @@ var grid: Node3D
 var renderer: Node3D
 
 # Visual config
+var default_colour: Color 
 var cell_color: Color = Color(0.0, 0.0, 12.536, 1.0)
 var central_cell_color : Color = Color(0,0,0,1)
 var velocity_color : Color = Color(1,1,0)
 
 # Toggle debug layers
-var show_grid: bool = false
-var show_debug_boid: bool = false
-var show_neighbours: bool = false
+var show_grid: bool = true
+var show_debug_boid: bool = true
+var show_neighbours: bool = true
 var show_FOV_cone: bool = false
 var show_velocity_single: bool = false
 var show_velocity_all: bool = true
@@ -110,11 +111,11 @@ func _process(delta: float) -> void:
 func _draw_debug_layers(i: int, pos: Vector3, central_cell: Vector3i) -> void:
 	# Draw grid cells
 	if show_grid:
-		_draw_world_cells(central_cell)
+		_draw_world_cells(central_cell, default_colour)
 
 	# Draw target boid
 	if show_debug_boid:
-		_draw_wire_sphere(im_grid, pos, sight_radius, Color(0.0, 0.0, 12.536, 1.0))
+		_draw_wire_sphere(im_grid, pos, sight_radius, default_colour)
 	
 	# Draw neighbours
 	if show_neighbours:
@@ -122,9 +123,9 @@ func _draw_debug_layers(i: int, pos: Vector3, central_cell: Vector3i) -> void:
 
 	# Draw velocity vectors
 	if show_velocity_all:
-		_draw_velocity_all(im_grid)
+		_draw_velocity_all(im_grid, default_colour)
 	elif show_velocity_single:
-		_draw_velocity_single(im_grid, i)
+		_draw_velocity_single(im_grid, i, default_colour)
 		
 	# Draw FOV cone
 	if show_FOV_cone:
@@ -164,19 +165,18 @@ func end_surface() -> void:
 # ---------------------------------------------------------
 # Draw World Cells (3 by 3 by 3 about central_cell)
 # ---------------------------------------------------------
-func _draw_world_cells(central_cell):
+func _draw_world_cells(central_cell, color):
 	for x in range(central_cell.x - 1, central_cell.x + 2):
 		for y in range(central_cell.y - 1, central_cell.y + 2):
 			for z in range(central_cell.z - 1, central_cell.z + 2):
 					var this_cell: Vector3i = Vector3i(x, y, z)
-					var color: Color
 					var target_im: ImmediateMesh
 
 					if this_cell == central_cell:
 						color = central_cell_color
 						target_im = im_highlight
 					else:
-						color = cell_color
+						color = default_colour
 						target_im = im_grid
 
 					_draw_cell(target_im, this_cell, color)
@@ -263,17 +263,17 @@ func _draw_wire_circle(im: ImmediateMesh, center: Vector3, radius: float, color:
 # ---------------------------------------------------------
 # Draw Velocity Vectors (for single boid and for all boids)
 # ---------------------------------------------------------
-func _draw_velocity_single(im: ImmediateMesh, i: int) -> void:
+func _draw_velocity_single(im: ImmediateMesh, i: int, color: Color) -> void:
 	var p = positions[i]
 	var v = velocities[i]
 
-	begin_surface(im, Mesh.PRIMITIVE_LINES, velocity_color)
+	begin_surface(im, Mesh.PRIMITIVE_LINES, color)
 	add_vertex(p)
 	add_vertex(p + v.normalized() * 3.0)
 	end_surface()
 
-func _draw_velocity_all(im: ImmediateMesh) -> void:
-	begin_surface(im, Mesh.PRIMITIVE_LINES, velocity_color)
+func _draw_velocity_all(im: ImmediateMesh, color: Color) -> void:
+	begin_surface(im, Mesh.PRIMITIVE_LINES, color)
 
 	var count: int = positions.size()
 	for i in count:
@@ -361,7 +361,7 @@ func _draw_fov_cone(im: ImmediateMesh, i, cone_color : Color) -> void:
 	if phi <= PI/2.0:
 		phi_vis = phi
 		dir_sign = 1.0
-		cone_color = Color(0.0, 0.0, 0.0, 1.0)
+		cone_color = Color(0.0, 0.0, 1.0, 1.0)
 	# wide FOV → draw blind spot cone behind
 	else:
 		phi_vis = PI - phi

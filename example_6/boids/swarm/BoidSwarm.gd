@@ -19,7 +19,8 @@ var sight_radius: float = 0.0
 var cage_radius: float = 0.0
 var max_speed: float = 0.0
 var desired_separation: float = 0.0
-var boid_mesh: Mesh = null
+var boid_mesh: ArrayMesh = null
+var boid_colour : Color = Color(1,1,1,1)
 
 var weights: Dictionary = {}
 var limits: Dictionary = {}
@@ -39,6 +40,7 @@ func initialize(params: Dictionary) -> void:
 	max_speed = params.max_speed
 	desired_separation = params.desired_separation
 	boid_mesh = params.boid_mesh
+	boid_colour = params.boid_colour
 
 	weights = {
 		"alignment": params.alignment_weight,
@@ -59,7 +61,7 @@ func initialize(params: Dictionary) -> void:
 	_init_debug_overlay()
 	_init_renderer()
 
-	print("BoidSwarm initialized with", boid_count, "boids")
+	print("BoidSwarm: initialized swarm with ", boid_count, " boids")
 
 
 # ---------------------------------------------------------
@@ -101,6 +103,7 @@ func _init_debug_overlay() -> void:
 	debug.sight_radius = sight_radius
 	debug.grid = grid
 	debug.renderer = renderer
+	debug.default_colour = boid_colour
 
 
 # ---------------------------------------------------------
@@ -109,7 +112,7 @@ func _init_debug_overlay() -> void:
 
 func _init_renderer() -> void:
 	if renderer and boid_mesh:
-		renderer.setup(boid_mesh, boid_count)
+		renderer.setup(boid_mesh, boid_colour, boid_count)
 
 
 # ---------------------------------------------------------

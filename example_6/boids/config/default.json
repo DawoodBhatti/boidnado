@@ -1,5 +1,5 @@
 {
-  "boid_count": 200,
+  "boid_count": 100,
   "cell_size": 4.0,
   "sight_radius": 4.5,
   "cage_radius": 40.0,
@@ -12,5 +12,6 @@
   "wander_strength": 3.2,
   "boundary_strength": 1.0,
 
-  "boid_mesh_path": "res://example_5/boids/models/biggerboid.obj"
+  "boid_mesh_path": "res://example_5/boids/models/biggerboid.obj",
+  "boid_colour": [1.0,0.0,0.0,0.5],
 }

@@ -99,10 +99,8 @@ func setup(simulation_core: String, boid_count, limits, weights, grid, behaviour
 	
 func _select_core(simulation_core: String):
 	if simulation_core == "CPU":
-		print("CPU selected")
 		core = cpu_core
 	elif simulation_core == "GPU":
-		print("GPU selected")
 		core = gpu_core
 	
 	
