@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://b5ridkjpnyag2" path="res://example_6/debug_overlay/debug_overlay.tscn" id="2_oi2sd"]
 [ext_resource type="PackedScene" uid="uid://cixfo72nlfc70" path="res://example_6/player/player.tscn" id="3_ea233"]
 [ext_resource type="PackedScene" uid="uid://c4lk0841jfs0m" path="res://example_6/floor/floor.tscn" id="4_4ksu4"]
-[ext_resource type="PackedScene" uid="uid://bc7c0fdk6cnhm" path="res://example_6/boids/root/Boids.tscn" id="5_fq1pl"]
+[ext_resource type="PackedScene" uid="uid://y3ud2vmhc3wh" path="res://example_6/boids/swarm_manager/SwarmManager.tscn" id="5_fq1pl"]
 
 [sub_resource type="Sky" id="Sky_0vuym"]
 
@@ -33,4 +33,4 @@ floor_width = 20.0
 floor_depth = 20.0
 floor_height = 0.0
 
-[node name="Boids" parent="." instance=ExtResource("5_fq1pl")]
+[node name="SwarmManager" parent="." instance=ExtResource("5_fq1pl")]

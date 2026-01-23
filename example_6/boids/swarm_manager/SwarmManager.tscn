@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://y3ud2vmhc3wh"]
+
+[ext_resource type="Script" uid="uid://f1jentug80k8" path="res://example_6/boids/swarm_manager/SwarmManager.gd" id="1_ufbvi"]
+[ext_resource type="PackedScene" uid="uid://dokpqr2v02etx" path="res://example_6/boids/swarm/BoidSwarm.tscn" id="2_ysmyh"]
+
+[node name="SwarmManager" type="Node3D"]
+script = ExtResource("1_ufbvi")
+
+[node name="Swarm1" parent="." instance=ExtResource("2_ysmyh")]

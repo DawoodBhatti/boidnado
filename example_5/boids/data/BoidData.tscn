@@ -1,53 +1,14 @@
 [gd_scene load_steps=4 format=3 uid="uid://d3l7oe64n8sof"]
 
 [ext_resource type="Script" uid="uid://vi47gac8q8f4" path="res://example_5/boids/controller/BoidData.gd" id="1_yb23t"]
-[ext_resource type="Script" uid="uid://klyyy480n37b" path="res://example_5/boids/data/CPUSimulationCore.gd" id="3_vah3u"]
-
-[sub_resource type="GDScript" id="GDScript_jjgcs"]
-script/source = "extends Node
-
-func update(delta, data):
-	var positions = data.positions
-	var velocities = data.velocities
-	var accelerations = data.accelerations
-	var grid = data.grid
-	var behaviours = data.behaviours
-	var limits = data.limits
-	var weights = data.weights
-	var cage_radius = data.cage_radius
-
-	# Reset accelerations
-	for i in accelerations.size():
-		accelerations[i] = Vector3.ZERO
-
-	# Rebuild grid
-	grid.rebuild(positions)
-
-	# Apply behaviours
-	for i in positions.size():
-		var neighbours = grid.get_neighbours(i, positions, velocities, limits[\"sight_radius\"])
-
-		behaviours.apply_alignment(i, positions, velocities, accelerations, neighbours, weights[\"alignment\"])
-		behaviours.apply_cohesion(i, positions, velocities, accelerations, neighbours, weights[\"cohesion\"])
-		behaviours.apply_separation(i, positions, velocities, accelerations, neighbours, limits[\"desired_separation\"], weights[\"separation\"])
-		behaviours.apply_wander(i, velocities, accelerations, weights[\"wander\"])
-		behaviours.apply_boundary_potential(i, positions, velocities, accelerations, cage_radius, weights[\"boundary\"])
-
-	# Integrate
-	for i in positions.size():
-		velocities[i] += accelerations[i] * delta
-
-		if velocities[i].length() > limits[\"max_speed\"]:
-			velocities[i] = velocities[i].normalized() * limits[\"max_speed\"]
-
-		positions[i] += velocities[i] * delta
-"
+[ext_resource type="Script" uid="uid://klyyy480n37b" path="res://example_6/boids/data/CPUSimulationCore.gd" id="3_j6mo0"]
+[ext_resource type="Script" uid="uid://biidne5g3if52" path="res://example_5/boids/data/CPUSimulationCore.gd" id="3_vah3u"]
 
 [node name="BoidData" type="Node3D"]
 script = ExtResource("1_yb23t")
 
 [node name="CPUSimulationCore" type="Node3D" parent="."]
-script = SubResource("GDScript_jjgcs")
+script = ExtResource("3_vah3u")
 
 [node name="GPUSimulationCore" type="Node3D" parent="."]
-script = ExtResource("3_vah3u")
+script = ExtResource("3_j6mo0")

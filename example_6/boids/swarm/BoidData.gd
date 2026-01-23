@@ -25,8 +25,11 @@ extends Node
 # In short: BoidData = the body, SimulationCore = the brain.
 # -------------------------------------------------------------------
 
-var core: Node  # Active simulation backend (CPU or GPU child)
-
+var start_simulation: bool = false
+var simulation_core: String  # Active simulation backend (CPU or GPU child)
+var core: Node3D
+@onready var cpu_core : Node3D = $CPUSimulationCore
+@onready var gpu_core : Node3D = $GPUSimulationCore
 
 # -------------------------------------------------------------------
 # Simulation State Arrays
@@ -62,13 +65,17 @@ var cage_radius: float  # Boundary constraint
 #
 # After setup(), the simulation is ready to run.
 # -------------------------------------------------------------------
-func setup(boid_count, limits, weights, grid, behaviours, cage_radius, max_speed):
+func setup(simulation_core: String, boid_count, limits, weights, grid, behaviours, cage_radius, max_speed):
+	self.simulation_core = simulation_core
 	self.boid_count = boid_count
 	self.limits = limits
 	self.weights = weights
 	self.grid = grid
 	self.behaviours = behaviours
 	self.cage_radius = cage_radius
+
+	# Set core type
+	_select_core(simulation_core)
 
 	# Allocate arrays
 	positions = PackedVector3Array()
@@ -83,6 +90,22 @@ func setup(boid_count, limits, weights, grid, behaviours, cage_radius, max_speed
 	randomize_initial_state(max_speed)
 
 
+	#simulation might need a short delay for buffer allocation, etc
+	if simulation_core == "GPU":
+		await gpu_core.setup(self)
+		
+	start_simulation = true
+	
+	
+func _select_core(simulation_core: String):
+	if simulation_core == "CPU":
+		print("CPU selected")
+		core = cpu_core
+	elif simulation_core == "GPU":
+		print("GPU selected")
+		core = gpu_core
+	
+	
 # -------------------------------------------------------------------
 # randomize_initial_state()
 # Creates an initial distribution of boids.

@@ -9,10 +9,8 @@ var RAM: Label
 var Draws: Label
 var BoidCount: Label
 
-
 @onready var logger: Node = $Logging
-@onready var BoidController : Node = $"../BoidController"
-
+@onready var SwarmManager : Node = $"../Boids/SwarmManager"
 
 func _ready() -> void:
 
@@ -21,7 +19,6 @@ func _ready() -> void:
 	RAM = $VboxContainer/RAM
 	Draws = $VboxContainer/Draws
 	BoidCount = $VboxContainer/BoidCount
-
 
 func _process(delta: float) -> void:
 	time_accum += delta
@@ -35,7 +32,7 @@ func _update_stats() -> void:
 	var mem_peak: float = OS.get_static_memory_peak_usage() / (1024.0 * 1024.0)
 	var cpu_time: float = Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
 	var draw_calls: int = Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
-	var number_boids: int = BoidController.boid_count
+	var number_boids: int = SwarmManager.boid_count
 
 	FPS.text = "FPS: %d" % fps
 	CPU.text = "CPU frame time: %.2f ms" % cpu_time

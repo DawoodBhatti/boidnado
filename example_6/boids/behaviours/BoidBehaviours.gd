@@ -98,7 +98,7 @@ static func apply_boundary_potential(
 	var dist: float = pos.length()
 
 	# Start applying force only after the radius
-	if dist <  cage_radius:
+	if dist < 0.8 * cage_radius:
 		return
 
 	var normal: Vector3 = pos.normalized()

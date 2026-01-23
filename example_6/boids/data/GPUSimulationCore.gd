@@ -1,5 +1,9 @@
 extends Node
 
+
+func setup(data):
+	print("coming soon")
+	print("init buffer values once on simulation start")
+
 func update(delta, data):
-	# GPU logic will go here later
-	pass
+	print("GPU logic coming shortly!")

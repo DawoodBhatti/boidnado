@@ -7,7 +7,7 @@ extends Node3D
 func _ready() -> void:
 	#offset to sit on ground
 	Player.position.y += 1.5
-	print("Example 6: GPU boids!")
+	print("Example 6: deep architectural changes for: GPU boids!")
 	
 
 	#in no particular order
@@ -16,6 +16,7 @@ func _ready() -> void:
 	#marching cubes!
 	#double buffering optimisation/implementation
 	#tornado behaviours...
+	#multiple boid species (predator boids)
 
 	#things to keep an eye on:
 	#velocity vector mesh mismatch...

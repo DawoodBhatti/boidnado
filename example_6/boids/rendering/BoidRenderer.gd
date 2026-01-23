@@ -7,10 +7,11 @@ extends MultiMeshInstance3D
 # Blender mesh points along -Y, Godot expects -Z as forward
 var mesh_forward_correction : Basis
 
-# Uniform scale for each boid mesh
-# IDK if this is working the way I expected?
-@export var boid_scale: float = 1.0
 
+
+# some unpack function?
+
+# we pass the mesh, positions and velocities to be rendered?
 
 # ---------------------------------------------------------
 # Lifecycle
@@ -63,8 +64,5 @@ func update_transforms(positions: PackedVector3Array, velocities: PackedVector3A
 		# 3. Build transform with position
 		var xform := Transform3D(basis, positions[i])
 
-		# 4. Apply uniform scaling
-		xform = xform.scaled(Vector3(boid_scale, boid_scale, boid_scale))
-
-		# 5. Assign to MultiMesh
+		# 4. Assign to MultiMesh
 		multimesh.set_instance_transform(i, xform)
