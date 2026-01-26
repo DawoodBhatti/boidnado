@@ -35,20 +35,23 @@ func _query_mesh_position(mesh : Mesh) -> void:
 # ---------------------------------------------------------
 
 func setup(mesh: Mesh, colour: Color, count: int) -> void:
-	
-	#one colour per swarm, for now
+	# Duplicate the mesh so each swarm has its own copy
+	var mesh_copy := mesh.duplicate()
+
+	# Create a unique material
 	var material := StandardMaterial3D.new()
 	material.albedo_color = colour
-	
-	# Apply material to the mesh
-	mesh.surface_set_material(0, material)
-	
+
+	# Apply material to the duplicated mesh
+	mesh_copy.surface_set_material(0, material)
+
+	# Build the MultiMesh
 	var mm := MultiMesh.new()
-	mm.mesh = mesh
+	mm.mesh = mesh_copy
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.instance_count = count
-	multimesh = mm
 
+	multimesh = mm
 
 # ---------------------------------------------------------
 # Update transforms each frame
@@ -64,7 +67,7 @@ func update_transforms(positions: PackedVector3Array, velocities: PackedVector3A
 			dir = Vector3.FORWARD
 
 		# 1. Orient mesh to velocity
-		var basis := Basis().looking_at(dir, Vector3.UP)
+		var basis : Basis = Basis.looking_at(dir, Vector3.UP)
 
 		# 2. Apply forward-axis correction
 		basis = basis * mesh_forward_correction

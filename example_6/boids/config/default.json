@@ -1,7 +1,9 @@
 {
+  "swarm_name": "default_boids",
   "boid_count": 100,
   "cell_size": 4.0,
   "sight_radius": 4.5,
+  "FOV_angle_deg": 100,
   "cage_radius": 40.0,
   "max_speed": 12.0,
   "desired_separation": 0.9,

@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://cg3fgdsp52oqy"]
+
+[ext_resource type="Script" uid="uid://d4krjxvkoobnr" path="res://example_6/boids/behaviours/CPUBehaviours.gd" id="1_3hau4"]
+[ext_resource type="Script" uid="uid://b71m7w5uumv81" path="res://example_6/boids/behaviours/GPUBehaviours.gd" id="2_8ld55"]
+[ext_resource type="Script" uid="uid://f73efawjudmy" path="res://example_6/boids/behaviours/BehaviourPresets.gd" id="3_buyxj"]
+
+[node name="Behaviours" type="Node"]
+
+[node name="CPUBehaviours" type="Node" parent="."]
+script = ExtResource("1_3hau4")
+
+[node name="GPUBehaviors" type="Node" parent="."]
+script = ExtResource("2_8ld55")
+
+[node name="BehaviourPresets" type="Node" parent="."]
+script = ExtResource("3_buyxj")

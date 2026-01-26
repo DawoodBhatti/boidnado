@@ -1,141 +1,86 @@
 extends Node3D
 
 # ---------------------------------------------------------
-# Internal State
+# Swarm
+# ---------------------------------------------------------
+# Responsibilities:
+#   - Owns the following per swarm instances:
+#   -  boid data 
+#   -  boid renderer
+#   -  boid cage 
+#   -  boid VisualDebug 
+#   - Initialize simulation parameters within data cores
+#   - Forward updates to renderer, cage and debugger (optional)
+#
+# It does NOT:
+#   - Perform simulation logic (CPU/GPU cores do that)
+#   - Manage global buffers (SwarmManager does that)
 # ---------------------------------------------------------
 
-@onready var grid: Node3D = $BoidsGrid
-@onready var cage: Node3D = $BoidCage
-@onready var debug: Node3D = $BoidsDebugOverlay
-@onready var behaviours: Node3D = $BoidBehaviours
-@onready var renderer: MultiMeshInstance3D = $BoidRenderer
 @onready var data: Node = $BoidData
-
-var simulation_core: String = "CPU"
-
-var boid_count: int = 0
-var cell_size: float = 0.0
-var sight_radius: float = 0.0
-var cage_radius: float = 0.0
-var max_speed: float = 0.0
-var desired_separation: float = 0.0
-var boid_mesh: ArrayMesh = null
-var boid_colour : Color = Color(1,1,1,1)
-
-var weights: Dictionary = {}
-var limits: Dictionary = {}
-
+@onready var renderer: Node3D = $BoidRenderer
+@onready var visual_debug: Node = $BoidVisualDebug   
+@onready var cage: Node3D = $BoidCage
+var global_grid: Node3D
 
 # ---------------------------------------------------------
-# Initialization (called by SwarmManager)
+# Initialize swarm with parameters
 # ---------------------------------------------------------
-
-func initialize(params: Dictionary) -> void:
-	simulation_core = params.simulation_core
-
-	boid_count = params.boid_count
-	cell_size = params.cell_size
-	sight_radius = params.sight_radius
-	cage_radius = params.cage_radius
-	max_speed = params.max_speed
-	desired_separation = params.desired_separation
-	boid_mesh = params.boid_mesh
-	boid_colour = params.boid_colour
-
-	weights = {
-		"alignment": params.alignment_weight,
-		"cohesion": params.cohesion_weight,
-		"separation": params.separation_weight,
-		"wander": params.wander_strength,
-		"boundary": params.boundary_strength
+func initialize(params: Dictionary, behaviours_root: Node, behaviours_mask: Dictionary, global_grid: Node3D) -> void:
+	var simulation_core: String = params["simulation_core"]
+	var boid_count: int = params["boid_count"]
+	var limits: Dictionary = {
+		"max_speed": params["max_speed"],
+		"sight_radius": params["sight_radius"],
+		"desired_separation": params["desired_separation"]
+	}
+	var weights: Dictionary = {
+		"alignment": params["alignment_weight"],
+		"cohesion": params["cohesion_weight"],
+		"separation": params["separation_weight"],
+		"wander": params["wander_strength"],
+		"boundary": params["boundary_strength"]
 	}
 
-	limits = {
-		"max_speed": max_speed,
-		"desired_separation": desired_separation,
-		"sight_radius": sight_radius
-	}
-
-	_init_geometry()
-	_init_data()
-	_init_debug_overlay()
-	_init_renderer()
-
-	print("BoidSwarm: initialized swarm with ", boid_count, " boids")
+	var cage_radius: float = params["cage_radius"]
+	var FOV_angle_deg: float = params["FOV_angle_deg"]
+	var max_speed: float = params["max_speed"]
 
 
-# ---------------------------------------------------------
-# Geometry
-# ---------------------------------------------------------
-
-func _init_geometry() -> void:
-	grid.cell_size = cell_size
-	cage.cage_radius = cage_radius
-
-
-# ---------------------------------------------------------
-# Data
-# ---------------------------------------------------------
-
-func _init_data() -> void:
+	# Setup BoidData
 	data.setup(
 		simulation_core,
 		boid_count,
 		limits,
 		weights,
-		grid,
-		behaviours,
+		behaviours_root,
 		cage_radius,
-		max_speed
+		FOV_angle_deg,
+		max_speed,
+		behaviours_mask
 	)
 
+	# Setup cage
+	cage.cage_radius = cage_radius
+	cage.cage_center = global_transform.origin
+	cage.cage_visible = true
 
-# ---------------------------------------------------------
-# Debug Overlay
-# ---------------------------------------------------------
+	# Setup renderer
+	renderer.setup(
+		params["boid_mesh"],
+		params["boid_colour"],
+		boid_count
+	)
 
-func _init_debug_overlay() -> void:
-	debug.cell_length = cell_size
-	debug.FOV_radius = sight_radius
-	debug.FOV_angle = grid.FOV_angle
-	debug.positions = data.positions
-	debug.velocities = data.velocities
-	debug.sight_radius = sight_radius
-	debug.grid = grid
-	debug.renderer = renderer
-	debug.default_colour = boid_colour
-
-
-# ---------------------------------------------------------
-# Renderer
-# ---------------------------------------------------------
-
-func _init_renderer() -> void:
-	if renderer and boid_mesh:
-		renderer.setup(boid_mesh, boid_colour, boid_count)
+	# Setup VisualDebug (per-swarm)
+	visual_debug.initialize(data, global_grid, params["boid_colour"])
 
 
 # ---------------------------------------------------------
-# Simulation Step (called by SwarmManager)
+# Called by SwarmManager after simulation step
 # ---------------------------------------------------------
-
-func simulate_step(delta: float) -> void:
-	data.update(delta)
-	_update_renderer()
-	_update_debug_overlay()
-
-
-# ---------------------------------------------------------
-# Renderer + Debug Updates
-# ---------------------------------------------------------
-
-func _update_renderer() -> void:
-	if renderer:
-		renderer.update_transforms(data.positions, data.velocities)
-
-
-func _update_debug_overlay() -> void:
-	if debug:
-		debug.positions = data.positions
-		debug.velocities = data.velocities
-		debug.sight_radius = limits["sight_radius"]
+func update_renderer() -> void:
+	renderer.update_transforms(
+		data.positions,
+		data.velocities
+	)

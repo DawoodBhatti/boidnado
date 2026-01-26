@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://bh5wi16va0rr3"]
+
+[ext_resource type="Script" uid="uid://b863v1iad3pce" path="res://example_6/boids/grid/GlobalGrid.gd" id="1_t7lo7"]
+[ext_resource type="Script" uid="uid://dswcvvdochmko" path="res://example_6/boids/grid/CPUGrid.gd" id="2_voaeh"]
+[ext_resource type="Script" uid="uid://cl6bn7qmbun0e" path="res://example_6/boids/grid/GPUGrid.gd" id="3_0ub3r"]
+
+[node name="GlobalGrid" type="Node3D"]
+script = ExtResource("1_t7lo7")
+
+[node name="CPUGrid" type="Node3D" parent="."]
+script = ExtResource("2_voaeh")
+
+[node name="GPUGrid" type="Node3D" parent="."]
+script = ExtResource("3_0ub3r")

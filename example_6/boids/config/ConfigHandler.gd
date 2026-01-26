@@ -20,7 +20,7 @@ This guarantees:
  - No accidental cross‑swarm contamination
 """
 
-@export var debug_enabled: bool = true
+@export var debug_enabled: bool = false
 
 
 # ---------------------------------------------------------
@@ -124,10 +124,12 @@ func extract_params(file_name: String) -> Dictionary:
 
 	# Build the parameter dictionary expected by BoidSwarm
 	return {
+		"swarm_name": config.get("swarm_name", "No name supplied"),
 		"simulation_core": config.get("simulation_core", "CPU"),
 		"boid_count": int(config.get("boid_count", 200)),
 		"cell_size": float(config.get("cell_size", 4.0)),
 		"sight_radius": float(config.get("sight_radius", 5.0)),
+		"FOV_angle_deg": float(config.get("FOV_angle_deg",100)),
 		"cage_radius": float(config.get("cage_radius", 40.0)),
 		"max_speed": float(config.get("max_speed", 5.0)),
 		"desired_separation": float(config.get("desired_separation", 0.5)),

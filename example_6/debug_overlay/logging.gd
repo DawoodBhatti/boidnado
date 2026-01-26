@@ -172,12 +172,12 @@ func save_performance_results() -> void:
 	var timestamp: String = Time.get_datetime_string_from_system()
 
 	_write_local_raw(version, summary, runtime, timestamp)
-	_write_local_summary(version, summary, runtime)
+	_write_local_summary(version)
 	PerformanceTracker.update_global()
 
 	if DEBUG_PRINT:
 		_debug_print_local(version)
-		_debug_print_global(version)
+		_debug_print_global()
 
 	print("Saved local + global performance for ", version)
 
@@ -211,7 +211,7 @@ func _write_local_raw(version: String, summary: Dictionary, runtime: float, time
 	file.close()
 
 
-func _write_local_summary(version: String, last_summary: Dictionary, runtime: float) -> void:
+func _write_local_summary(version: String) -> void:
 	var iter := _get_iteration_number(version)
 	var folder := LOG_BASE_DIR % version
 
@@ -326,6 +326,6 @@ func _debug_print_local(version: String) -> void:
 		print(f2.get_as_text())
 
 
-func _debug_print_global(version: String) -> void:
+func _debug_print_global() -> void:
 	print("\n--- GLOBAL SUMMARY ---")
 	print(JSON.stringify(PerformanceTracker.global_results, "\t"))

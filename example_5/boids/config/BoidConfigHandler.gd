@@ -3,7 +3,7 @@ extends Node
 # ---------------------------------------------------------
 # Debug Toggle
 # ---------------------------------------------------------
-@export var debug_enabled: bool = false
+@export var debug_enabled: bool = true
 
 # ---------------------------------------------------------
 # Config State

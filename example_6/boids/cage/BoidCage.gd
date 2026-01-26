@@ -50,7 +50,7 @@ func _process(delta: float) -> void:
 	if not cage_visible:
 		return
 
-	# IMPORTANT: clear surfaces every frame
+	# clear surfaces every frame otherwise we reach a render limit
 	im_cage.clear_surfaces()
 
 	_draw_wire_sphere(im_cage, cage_center, cage_radius, cage_color)

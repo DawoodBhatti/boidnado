@@ -1,0 +1,18 @@
+[gd_scene load_steps=6 format=3 uid="uid://bc7c0fdk6cnhm"]
+
+[ext_resource type="Script" uid="uid://bls4507o5std7" path="res://example_6/boids/_root/boids.gd" id="1_mhd4y"]
+[ext_resource type="PackedScene" uid="uid://y3ud2vmhc3wh" path="res://example_6/boids/swarm_manager/SwarmManager.tscn" id="2_iqeh7"]
+[ext_resource type="PackedScene" uid="uid://bh5wi16va0rr3" path="res://example_6/boids/grid/GlobalGrid.tscn" id="2_nmq5o"]
+[ext_resource type="PackedScene" uid="uid://b7xy1pyov6o8c" path="res://example_6/boids/config/ConfigHandler.tscn" id="3_iqeh7"]
+[ext_resource type="PackedScene" uid="uid://cg3fgdsp52oqy" path="res://example_6/boids/behaviours/Behaviours.tscn" id="5_7341b"]
+
+[node name="Boids" type="Node3D"]
+script = ExtResource("1_mhd4y")
+
+[node name="SwarmManager" parent="." instance=ExtResource("2_iqeh7")]
+
+[node name="GlobalGrid" parent="." instance=ExtResource("2_nmq5o")]
+
+[node name="ConfigHandler" parent="." instance=ExtResource("3_iqeh7")]
+
+[node name="Behaviours" parent="." instance=ExtResource("5_7341b")]

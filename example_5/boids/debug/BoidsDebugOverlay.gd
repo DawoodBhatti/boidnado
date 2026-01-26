@@ -23,10 +23,10 @@ var central_cell_color : Color = Color(0,0,0,1)
 var velocity_color : Color = Color(1,1,0)
 
 # Toggle debug layers
-var show_grid: bool = false
-var show_debug_boid: bool = false
-var show_neighbours: bool = false
-var show_FOV_cone: bool = false
+var show_grid: bool = true
+var show_debug_boid: bool = true
+var show_neighbours: bool = true
+var show_FOV_cone: bool = true
 var show_velocity_single: bool = false
 var show_velocity_all: bool = true
 

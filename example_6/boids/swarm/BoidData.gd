@@ -1,149 +1,156 @@
 extends Node
 
-# -------------------------------------------------------------------
+# ---------------------------------------------------------
 # BoidData
-# -------------------------------------------------------------------
-# This node is the *state container* for the entire boid simulation.
+# ---------------------------------------------------------
+# Responsibilities:
+#   - Hold all simulation state for a single swarm
+#   - Hold parameters (limits, weights, behaviours)
+#   - Hold global_start/global_end assigned by SwarmManager
+#   - Store neighbour lists (populated by CPU/GPU core)
+#   - Store local/global index mapping
+#   - Select CPU/GPU simulation core
 #
-# It owns:
-#   - positions, velocities, accelerations
-#   - simulation parameters (limits, weights)
-#   - references to shared systems (grid, behaviours)
-#
-# It does NOT perform any simulation logic itself.
-# Instead, it delegates simulation to a backend "core" node:
-#
-#       CPUSimulationCore   (pure GDScript implementation)
-#       GPUSimulationCore   (future compute-shader implementation)
-#
-# This separation allows:
-#   - clean CPU/GPU swapping
-#   - running both backends in parallel for debugging
-#   - keeping the controller free of simulation logic
-#   - keeping all state in one place for rendering/debugging
-#
-# In short: BoidData = the body, SimulationCore = the brain.
-# -------------------------------------------------------------------
+# It does NOT:
+#   - Know about the global grid
+#   - Know about global buffers
+#   - Perform simulation logic
+#   - Call its own core
+# ---------------------------------------------------------
 
 var start_simulation: bool = false
-var simulation_core: String  # Active simulation backend (CPU or GPU child)
-var core: Node3D
-@onready var cpu_core : Node3D = $CPUSimulationCore
-@onready var gpu_core : Node3D = $GPUSimulationCore
+var simulation_core: String = ""
+var core: Node = null
+var behaviours_CPU: Node = null
+var behaviours_GPU: Node = null
+var behaviours_root: Node = null
+var behaviours_mask: Dictionary 
 
-# -------------------------------------------------------------------
-# Simulation State Arrays
-# These are the single source of truth for all boid data.
-# No other node should allocate or own these arrays.
-# -------------------------------------------------------------------
-var positions: PackedVector3Array
-var velocities: PackedVector3Array
-var accelerations: PackedVector3Array
+@onready var cpu_core: Node = $CPUSimulationCore
+@onready var gpu_core: Node = $GPUSimulationCore
 
+# Simulation state arrays
+var positions: PackedVector3Array = PackedVector3Array()
+var velocities: PackedVector3Array = PackedVector3Array()
+var accelerations: PackedVector3Array = PackedVector3Array()
 
-# -------------------------------------------------------------------
-# Simulation Parameters
-# These are injected by the controller during setup.
-# -------------------------------------------------------------------
-var boid_count: int
-var limits: Dictionary
-var weights: Dictionary
+# Per‑boid neighbour lists (local indices)
+var neighbours: Array = []   # Array[PackedInt32Array]
 
-var grid: Node          # Spatial hash grid for neighbour lookup
-var behaviours: Node    # Behaviour functions (alignment, cohesion, etc.)
-var cage_radius: float  # Boundary constraint
+# Local → Global index mapping
+var local_to_global: PackedInt32Array = PackedInt32Array()
 
 
-# -------------------------------------------------------------------
-# setup()
-# Called once by the controller after config is loaded.
-#
-# Responsibilities:
-#   - store references + parameters
-#   - allocate simulation arrays
-#   - randomize initial boid positions/velocities
-#
-# After setup(), the simulation is ready to run.
-# -------------------------------------------------------------------
-func setup(simulation_core: String, boid_count, limits, weights, grid, behaviours, cage_radius, max_speed):
-	self.simulation_core = simulation_core
-	self.boid_count = boid_count
-	self.limits = limits
-	self.weights = weights
-	self.grid = grid
-	self.behaviours = behaviours
-	self.cage_radius = cage_radius
+# Parameters
+var boid_count: int = 0
+var limits: Dictionary = {}
+var weights: Dictionary = {}
+var cage_radius: float = 0.0
 
-	# Set core type
-	_select_core(simulation_core)
+# Assigned by SwarmManager each frame
+var global_start: int = 0
+var global_end: int = 0   # global_start + boid_count
+
+# FOV
+var FOV_angle: float 
+var FOV_DOT_THRESHOLD: float
+
+
+# ---------------------------------------------------------
+# Setup (called by Swarm.initialize)
+# ---------------------------------------------------------
+func setup(
+	simulation_core_in: String,
+	boid_count_in: int,
+	limits_in: Dictionary,
+	weights_in: Dictionary,
+	behaviours_root_in: Node,
+	cage_radius_in: float,
+	FOV_angle_deg_in: float, 
+	max_speed: float,
+	behaviours_mask_in: Dictionary
+) -> void:
+
+	simulation_core = simulation_core_in
+	boid_count = boid_count_in
+	limits = limits_in
+	weights = weights_in
+	behaviours_root = behaviours_root_in
+	cage_radius = cage_radius_in
+	FOV_angle = deg_to_rad(FOV_angle_deg_in)
+	FOV_DOT_THRESHOLD = cos(FOV_angle)
+	behaviours_mask = behaviours_mask_in
+
+	_select_core()
+	_select_behaviours()
 
 	# Allocate arrays
-	positions = PackedVector3Array()
-	velocities = PackedVector3Array()
-	accelerations = PackedVector3Array()
-
 	positions.resize(boid_count)
 	velocities.resize(boid_count)
 	accelerations.resize(boid_count)
 
-	# Initialize boids with random positions + velocities
-	randomize_initial_state(max_speed)
+	# Neighbour storage
+	neighbours.clear()
+	neighbours.resize(boid_count)
+	for i in boid_count:
+		neighbours[i] = PackedInt32Array()
 
+	# Local → Global mapping (filled by SwarmManager)
+	local_to_global.resize(boid_count)
 
-	#simulation might need a short delay for buffer allocation, etc
+	_randomize_initial_state(max_speed)
+
+	# GPU setup if needed
 	if simulation_core == "GPU":
 		await gpu_core.setup(self)
-		
+
 	start_simulation = true
-	
-	
-func _select_core(simulation_core: String):
+
+
+# ---------------------------------------------------------
+# Select CPU or GPU core
+# ---------------------------------------------------------
+func _select_core() -> void:
 	if simulation_core == "CPU":
 		core = cpu_core
-	elif simulation_core == "GPU":
+	else:
 		core = gpu_core
-	
-	
-# -------------------------------------------------------------------
-# randomize_initial_state()
-# Creates an initial distribution of boids.
-#
-# This is intentionally simple for now, but the architecture allows:
-#   - deterministic seeds
-#   - spherical distributions
-#   - grid distributions
-#   - loading from file
-#   - multi-species initialization
-# -------------------------------------------------------------------
-func randomize_initial_state(max_speed):
-	var rng = RandomNumberGenerator.new()
+
+func _select_behaviours() -> void:
+	if simulation_core == "CPU":
+		behaviours_CPU = behaviours_root.get_node("CPUBehaviours")
+	elif simulation_core == "GPU":
+		behaviours_GPU = behaviours_root.get_node("GPUBehaviours")
+
+
+# ---------------------------------------------------------
+# Randomize initial boid positions + velocities
+# ---------------------------------------------------------
+func _randomize_initial_state(max_speed: float) -> void:
+	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 
 	for i in boid_count:
 		positions[i] = Vector3(
-			rng.randf_range(-20, 20),
-			rng.randf_range(0, 10),
-			rng.randf_range(-20, 20)
+			rng.randf_range(-20.0, 20.0),
+			rng.randf_range(0.0, 10.0),
+			rng.randf_range(-20.0, 20.0)
 		)
 
-		velocities[i] = Vector3(
-			rng.randf_range(-10, 10),
-			rng.randf_range(-10, 10),
-			rng.randf_range(-10, 10)
-		).normalized() * max_speed * 0.5
+		var v := Vector3(
+			rng.randf_range(-10.0, 10.0),
+			rng.randf_range(-10.0, 10.0),
+			rng.randf_range(-10.0, 10.0)
+		).normalized()
 
+		velocities[i] = v * max_speed * 0.5
 		accelerations[i] = Vector3.ZERO
 
 
-# -------------------------------------------------------------------
-# update()
-# Called every physics frame by the controller.
-#
-# Delegates simulation to the active backend:
-#   core.update(delta, self)
-#
-# This keeps BoidData free of simulation logic and allows
-# CPU/GPU backends to be swapped or run in parallel.
-# -------------------------------------------------------------------
-func update(delta):
-	core.update(delta, self)
+# ---------------------------------------------------------
+# # Local → Global index mapping called by SwarmManager each frame
+# Assigns the global index slice for this swarm
+# ---------------------------------------------------------
+func assign_global_slice(start_index: int) -> void:
+	global_start = start_index
+	global_end = start_index + boid_count

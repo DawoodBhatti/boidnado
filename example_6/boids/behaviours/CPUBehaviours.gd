@@ -1,4 +1,4 @@
-extends Node3D 
+extends Node
 
 #match velocities of nearby neighbours
 static func apply_alignment(
