@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cw7vjt0rqhrgv"]
+
+[ext_resource type="Script" uid="uid://bf26268rx0tq5" path="res://example_7/boids/config/ConfigHandler.gd" id="1_3t7s6"]
+
+[node name="ConfigHandler" type="Node3D"]
+script = ExtResource("1_3t7s6")

@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://cvgbta4ffrau3"
+path="res://.godot/imported/IntegrationPass.glsl-1a3d75d114506c22972e21502831f7e7.res"
+
+[deps]
+
+source_file="res://example_7/boids/global_sim_core/IntegrationPass.glsl"
+dest_files=["res://.godot/imported/IntegrationPass.glsl-1a3d75d114506c22972e21502831f7e7.res"]
+
+[params]
+

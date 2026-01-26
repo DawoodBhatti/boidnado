@@ -1,0 +1,15 @@
+[gd_scene load_steps=5 format=3 uid="uid://cyeksty1gsqni"]
+
+[ext_resource type="Script" uid="uid://b6nkbjxqrjxl1" path="res://example_8/boids/Boids.gd" id="1_jrus8"]
+[ext_resource type="PackedScene" uid="uid://b3edsad64fqdm" path="res://example_8/boids/config_handler/ConfigHandler.tscn" id="3_kkob3"]
+[ext_resource type="PackedScene" uid="uid://b3oifk5o86gmr" path="res://example_8/boids/swarm_manager/SwarmManager.tscn" id="4_2pxjq"]
+[ext_resource type="PackedScene" uid="uid://c8npgp3uqofho" path="res://example_8/boids/GPU_simulation_core/GPU_SimulationCore.tscn" id="4_kkob3"]
+
+[node name="Boids" type="Node3D"]
+script = ExtResource("1_jrus8")
+
+[node name="ConfigHandler" parent="." instance=ExtResource("3_kkob3")]
+
+[node name="GPU_SimulationCore" parent="." instance=ExtResource("4_kkob3")]
+
+[node name="SwarmManager" parent="." instance=ExtResource("4_2pxjq")]

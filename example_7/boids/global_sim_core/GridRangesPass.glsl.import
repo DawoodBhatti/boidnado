@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dp4keide672ww"
+path="res://.godot/imported/GridRangesPass.glsl-9c4f764beaaee4b0930dca3b5c1b0d93.res"
+
+[deps]
+
+source_file="res://example_7/boids/global_sim_core/GridRangesPass.glsl"
+dest_files=["res://.godot/imported/GridRangesPass.glsl-9c4f764beaaee4b0930dca3b5c1b0d93.res"]
+
+[params]
+

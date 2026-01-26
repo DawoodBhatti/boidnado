@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://cuicr74onhipf"]
+
+[ext_resource type="Script" uid="uid://evkcf1mj0emq" path="res://example_7/boids/behaviours/Behaviours.gd" id="1_de5wa"]
+[ext_resource type="Script" uid="uid://30lgf8nvs87w" path="res://example_7/boids/behaviours/BehaviourPresets.gd" id="3_i2chx"]
+
+[node name="Behaviours" type="Node"]
+script = ExtResource("1_de5wa")
+
+[node name="BehaviourPresets" type="Node" parent="."]
+script = ExtResource("3_i2chx")

@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://c0ne2522roe1c"]
+
+[ext_resource type="Script" uid="uid://httmrwle3yi7" path="res://example_7/boids/(to delete) grid/GlobalGrid.gd" id="1_5sdav"]
+[ext_resource type="Script" uid="uid://bqmbpg0hhc50b" path="res://example_7/boids/(to delete) grid/GPUGrid.gd" id="3_83xx6"]
+
+[node name="GlobalGrid" type="Node3D"]
+script = ExtResource("1_5sdav")
+
+[node name="GPUGrid" type="Node3D" parent="."]
+script = ExtResource("3_83xx6")

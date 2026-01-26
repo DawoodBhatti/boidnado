@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bo0vicfbrlpmw"
+path="res://.godot/imported/boid.obj-5776d0926bd588d1da93e59d51bb7881.mesh"
+
+[deps]
+
+files=["res://.godot/imported/boid.obj-5776d0926bd588d1da93e59d51bb7881.mesh"]
+
+source_file="res://example_7/boids/models/boid.obj"
+dest_files=["res://.godot/imported/boid.obj-5776d0926bd588d1da93e59d51bb7881.mesh", "res://.godot/imported/boid.obj-5776d0926bd588d1da93e59d51bb7881.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

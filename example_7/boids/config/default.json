@@ -1,0 +1,19 @@
+{
+  "swarm_name": "default_boids",
+  "boid_count": 100,
+  "cell_size": 4.0,
+  "sight_radius": 4.5,
+  "FOV_angle_deg": 100,
+  "cage_radius": 40.0,
+  "max_speed": 12.0,
+  "desired_separation": 0.9,
+
+  "alignment_weight": 0.2,
+  "cohesion_weight": 0.1,
+  "separation_weight": 2.8,
+  "wander_strength": 3.2,
+  "boundary_strength": 1.0,
+
+  "boid_mesh_path": "res://example_5/boids/models/biggerboid.obj",
+  "boid_colour": [1.0,0.0,0.0,0.5],
+}

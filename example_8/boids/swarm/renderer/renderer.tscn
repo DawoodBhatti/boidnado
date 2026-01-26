@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dc182m4mw448q"]
+
+[ext_resource type="Script" uid="uid://bt5nv1rhx6o54" path="res://example_8/boids/swarm/renderer/Renderer.gd" id="1_xp0os"]
+
+[node name="Renderer" type="Node3D"]
+script = ExtResource("1_xp0os")

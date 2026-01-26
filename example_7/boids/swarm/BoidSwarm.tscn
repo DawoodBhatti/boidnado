@@ -1,0 +1,18 @@
+[gd_scene load_steps=6 format=3 uid="uid://g0irw1un46mu"]
+
+[ext_resource type="Script" uid="uid://bd8nmlnhocgkh" path="res://example_7/boids/swarm/BoidSwarm.gd" id="1_nr4o2"]
+[ext_resource type="PackedScene" uid="uid://dl20lvmivb2og" path="res://example_7/boids/rendering/BoidRenderer.tscn" id="2_3moor"]
+[ext_resource type="PackedScene" uid="uid://bxjekei0636bg" path="res://example_7/boids/cage/BoidCage.tscn" id="3_x3lv7"]
+[ext_resource type="PackedScene" uid="uid://cnj0odoawff7k" path="res://example_7/boids/data/BoidData.tscn" id="4_4bpr7"]
+[ext_resource type="PackedScene" uid="uid://d2a486b644sm7" path="res://example_7/boids/debug/BoidVisualDebug.tscn" id="5_6u6k3"]
+
+[node name="BoidSwarm" type="Node3D"]
+script = ExtResource("1_nr4o2")
+
+[node name="BoidRenderer" parent="." instance=ExtResource("2_3moor")]
+
+[node name="BoidCage" parent="." instance=ExtResource("3_x3lv7")]
+
+[node name="BoidData" parent="." instance=ExtResource("4_4bpr7")]
+
+[node name="BoidVisualDebug" parent="." instance=ExtResource("5_6u6k3")]

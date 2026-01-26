@@ -1,0 +1,15 @@
+[gd_scene load_steps=5 format=3 uid="uid://c8npgp3uqofho"]
+
+[ext_resource type="Script" uid="uid://j1gx74cuk07s" path="res://example_8/boids/GPU_simulation_core/GPU_SimulationCore.gd" id="1_sb1ce"]
+[ext_resource type="PackedScene" uid="uid://k0uegtwq1uxx" path="res://example_8/boids/GPU_simulation_core/GPU_device/GPU_device.tscn" id="2_8fhph"]
+[ext_resource type="PackedScene" uid="uid://jy320tmq10w0" path="res://example_8/boids/GPU_simulation_core/GPU_buffers/GPU_Buffers.tscn" id="3_8fhph"]
+[ext_resource type="PackedScene" uid="uid://b0ev83fr04gj8" path="res://example_8/boids/GPU_simulation_core/GPU_passes/GPU_Passes.tscn" id="4_roj3u"]
+
+[node name="GPU_SimulationCore" type="Node"]
+script = ExtResource("1_sb1ce")
+
+[node name="GPU_Device" parent="." instance=ExtResource("2_8fhph")]
+
+[node name="GPU_Buffers" parent="." instance=ExtResource("3_8fhph")]
+
+[node name="GPU_Passes" parent="." instance=ExtResource("4_roj3u")]

@@ -1,0 +1,36 @@
+[gd_scene load_steps=8 format=3 uid="uid://bdqtfh8goohb5"]
+
+[ext_resource type="Script" uid="uid://bbeucvi7dkja0" path="res://example_8/main.gd" id="1_pyiro"]
+[ext_resource type="PackedScene" uid="uid://carhwl3gfersv" path="res://example_8/debug_overlay/debug_overlay.tscn" id="2_psngt"]
+[ext_resource type="PackedScene" uid="uid://bu32bf3if1npg" path="res://example_8/player/player.tscn" id="3_ulka4"]
+[ext_resource type="PackedScene" uid="uid://dx5ekn368vs4m" path="res://example_8/floor/floor.tscn" id="4_gg4yy"]
+[ext_resource type="PackedScene" uid="uid://cyeksty1gsqni" path="res://example_8/boids/boids.tscn" id="5_psngt"]
+
+[sub_resource type="Sky" id="Sky_0vuym"]
+
+[sub_resource type="Environment" id="Environment_dalyv"]
+background_mode = 1
+background_color = Color(1, 1, 1, 1)
+background_energy_multiplier = 0.87
+sky = SubResource("Sky_0vuym")
+reflected_light_source = 2
+
+[node name="RootMaster" type="Node3D"]
+script = ExtResource("1_pyiro")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_dalyv")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 289.00958, 0)
+
+[node name="DebugOverlay" parent="." instance=ExtResource("2_psngt")]
+
+[node name="Player" parent="." instance=ExtResource("3_ulka4")]
+
+[node name="Floor" parent="." instance=ExtResource("4_gg4yy")]
+floor_width = 20.0
+floor_depth = 20.0
+floor_height = 0.0
+
+[node name="Boids" parent="." instance=ExtResource("5_psngt")]

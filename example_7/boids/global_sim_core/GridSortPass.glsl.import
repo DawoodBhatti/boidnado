@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://irespq4c7upi"
+path="res://.godot/imported/GridSortPass.glsl-4d4402a8cf01f920457ba9e3b655035b.res"
+
+[deps]
+
+source_file="res://example_7/boids/global_sim_core/GridSortPass.glsl"
+dest_files=["res://.godot/imported/GridSortPass.glsl-4d4402a8cf01f920457ba9e3b655035b.res"]
+
+[params]
+

@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://cnj0odoawff7k"]
+
+[ext_resource type="Script" uid="uid://dq17reuj67n4h" path="res://example_7/boids/swarm/BoidData.gd" id="1_8kwsc"]
+[ext_resource type="Script" uid="uid://dwnkcjl0ur2rx" path="res://example_7/boids/data/GPUSimulationCore.gd" id="3_5wal5"]
+
+[node name="BoidData" type="Node3D"]
+script = ExtResource("1_8kwsc")
+
+[node name="SwarmSimulationCore" type="Node3D" parent="."]
+script = ExtResource("3_5wal5")
+
+[node name="InitCompute" type="Node3D" parent="SwarmSimulationCore"]
+
+[node name="DispatchCompute" type="Node3D" parent="SwarmSimulationCore"]
+
+[node name="SyncCompute" type="Node3D" parent="SwarmSimulationCore"]

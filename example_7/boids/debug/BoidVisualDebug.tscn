@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://d2a486b644sm7"]
+
+[ext_resource type="Script" uid="uid://cln0od0ag373m" path="res://example_7/boids/debug/BoidVisualDebug.gd" id="1_jyukf"]
+
+[node name="BoidVisualDebug" type="Node3D"]
+script = ExtResource("1_jyukf")

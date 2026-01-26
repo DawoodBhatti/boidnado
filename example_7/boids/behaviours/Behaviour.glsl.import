@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://cltbeluh5qa2"
+path="res://.godot/imported/Behaviour.glsl-a2066381ccca4cc94fa034c7561f0b37.res"
+
+[deps]
+
+source_file="res://example_7/boids/behaviours/Behaviour.glsl"
+dest_files=["res://.godot/imported/Behaviour.glsl-a2066381ccca4cc94fa034c7561f0b37.res"]
+
+[params]
+

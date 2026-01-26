@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://ckydpa3nuk661"
+path="res://.godot/imported/GridAssignPass.glsl-0f1ae1e96e7f963428542998aa38c318.res"
+
+[deps]
+
+source_file="res://example_7/boids/global_sim_core/GridAssignPass.glsl"
+dest_files=["res://.godot/imported/GridAssignPass.glsl-0f1ae1e96e7f963428542998aa38c318.res"]
+
+[params]
+

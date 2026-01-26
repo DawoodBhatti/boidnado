@@ -1,0 +1,34 @@
+[gd_scene load_steps=9 format=3 uid="uid://beip8ky5r45ps"]
+
+[ext_resource type="Script" uid="uid://c66k4jcqs6rxs" path="res://example_7/boids/_root/GlobalSimulationCore.gd" id="1_pbpa6"]
+[ext_resource type="Script" uid="uid://b1ya8e3khso60" path="res://example_7/boids/global_sim_core/GlobalBuffers.gd" id="2_no6s0"]
+[ext_resource type="Script" uid="uid://bwihj5p823r0f" path="res://example_7/boids/global_sim_core/GridAssignPass.gd" id="3_ae7x8"]
+[ext_resource type="Script" uid="uid://co2n5fha7sj7o" path="res://example_7/boids/global_sim_core/GridSortPass.gd" id="4_eqf2t"]
+[ext_resource type="Script" uid="uid://3xh1joq65qay" path="res://example_7/boids/global_sim_core/GridRangesPass.gd" id="5_hqumo"]
+[ext_resource type="Script" uid="uid://1hjtyymd7u7k" path="res://example_7/boids/global_sim_core/BehaviourDispatcher.gd" id="6_cub6i"]
+[ext_resource type="Script" uid="uid://bg1t1hwcsjvsw" path="res://example_7/boids/global_sim_core/IntegrationPass.gd" id="7_1qowe"]
+[ext_resource type="Script" uid="uid://b1b5jsc4ryj80" path="res://example_7/boids/global_sim_core/GlobalComputeDevice.gd" id="8_voev7"]
+
+[node name="GlobalSimulationCore" type="Node"]
+script = ExtResource("1_pbpa6")
+
+[node name="GlobalComputeDevice" type="Node" parent="."]
+script = ExtResource("8_voev7")
+
+[node name="GlobalBuffers" type="Node" parent="."]
+script = ExtResource("2_no6s0")
+
+[node name="GridAssignPass" type="Node" parent="."]
+script = ExtResource("3_ae7x8")
+
+[node name="GridSortPass" type="Node" parent="."]
+script = ExtResource("4_eqf2t")
+
+[node name="GridRangesPass" type="Node" parent="."]
+script = ExtResource("5_hqumo")
+
+[node name="BehaviourDispatcher" type="Node" parent="."]
+script = ExtResource("6_cub6i")
+
+[node name="IntegrationPass" type="Node" parent="."]
+script = ExtResource("7_1qowe")
