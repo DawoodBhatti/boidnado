@@ -14,12 +14,12 @@ extends Node3D
 # ---------------------------------------------------------
 @export var target_local_index: int = 0
 
-@export var show_grid: bool = true
-@export var show_debug_boid: bool = true
-@export var show_neighbours: bool = true
-@export var show_FOV_cone: bool = true
-@export var show_velocity_single: bool = true
-@export var show_velocity_all: bool = true
+@export var show_grid: bool = false
+@export var show_debug_boid: bool = false
+@export var show_neighbours: bool = false
+@export var show_FOV_cone: bool = false
+@export var show_velocity_single: bool = false
+@export var show_velocity_all: bool = false
 
 # ---------------------------------------------------------
 # References
