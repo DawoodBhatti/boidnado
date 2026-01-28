@@ -1,0 +1,13 @@
+{
+  "swarm_name": "orbital_boids",
+  "boid_count": 150,
+  "cell_size": 4.0,
+  "sight_radius": 5.0,
+  "FOV_angle_deg": 100,
+  "cage_radius": 40.0,
+  "max_speed": 25.0,
+  "desired_separation": 0.5,
+
+  "boid_mesh_path": "res://example_5/boids/models/biggerboid.obj",
+  "boid_colour": [1.0,0.0,0.0,0.5],
+}

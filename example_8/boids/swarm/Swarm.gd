@@ -6,9 +6,10 @@ var count = 0
 var positions = []
 var velocities = []
 
-var renderer
-var cage
-var debug
+var renderer : Node3D
+var cage : Node3D
+var debug : Node3D
+var mesh : ArrayMesh
 
 func _ready():
 	renderer = get_node("Renderer")

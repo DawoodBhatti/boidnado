@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dtx8jy6foj8gp" path="res://example_8/boids/GPU_simulation_core/GPU_passes/Pass_GridAssign.gd" id="1_vrefr"]
 [ext_resource type="Script" uid="uid://nqb4p7ed28q6" path="res://example_8/boids/GPU_simulation_core/GPU_passes/Pass_GridSort.gd" id="2_yefol"]
-[ext_resource type="Script" uid="uid://m574ojfb1pxp" path="res://example_8/boids/GPU_simulation_core/GPU_passes/Pass_GridRanges.gd" id="3_hplfl"]
+[ext_resource type="Script" uid="uid://m574ojfb1pxp" path="res://example_8/boids/GPU_simulation_core/GPU_passes/Pass_GridMapping.gd" id="3_hplfl"]
 [ext_resource type="Script" uid="uid://dyrn0rdf7007t" path="res://example_8/boids/GPU_simulation_core/GPU_passes/Pass_Behaviour.gd" id="4_n0vx8"]
 [ext_resource type="Script" uid="uid://b6csbpsqkgvg1" path="res://example_8/boids/GPU_simulation_core/GPU_passes/Pass_Integration.gd" id="5_chdhu"]
 
@@ -14,7 +14,7 @@ script = ExtResource("1_vrefr")
 [node name="Pass_GridSort" type="Node" parent="."]
 script = ExtResource("2_yefol")
 
-[node name="Pass_GridRanges" type="Node" parent="."]
+[node name="Pass_GridMapping" type="Node" parent="."]
 script = ExtResource("3_hplfl")
 
 [node name="Pass_Behaviour" type="Node" parent="."]

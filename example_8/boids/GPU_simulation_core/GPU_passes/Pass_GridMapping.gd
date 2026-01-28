@@ -8,4 +8,4 @@ func _ready():
 	buffers = get_node("../../GPU_Buffers")
 
 func run():
-	print("Pass_GridRanges: dispatch compute")
+	print("Pass_GridMapping: dispatch compute")
