@@ -10,7 +10,7 @@ Responsibilities:
  - Store no internal state
 """
 
-@export var debug_enabled: bool = true
+@export var debug_enabled: bool = false
 
 
 # ---------------------------------------------------------

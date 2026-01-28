@@ -1,10 +1,8 @@
 extends Node
 
 var start_index = 0
+var colour : Color
 var count = 0
-
-var positions = []
-var velocities = []
 
 var renderer : Node3D
 var cage : Node3D
@@ -17,5 +15,5 @@ func _ready():
 	debug = get_node("VisualDebug")
 
 func update():
-	renderer.update(positions)
-	debug.update(positions, velocities)
+	renderer.update()
+	debug.update()

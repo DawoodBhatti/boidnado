@@ -1,61 +1,101 @@
 extends Node
 
+"""
+SwarmManager.gd
+----------------
+Responsibilities:
+ - Discover Swarm nodes
+ - Load config files (via ConfigHandler)
+ - Extract ONLY CPU‑side metadata:
+      • boid_count
+      • mesh
+      • colour
+ - Build GPU parameter blocks for each swarm
+ - Pass GPU parameters to GPU_SimulationCore
+ - Do NOT store simulation data
+ - Do NOT update transforms
+ - Do NOT read GPU buffers
+"""
+
 var gpu_core : Node
 var config_handler : Node
-var swarms = []
+var swarms : Array = []
 
-var positions_cpu = []
-var velocities_cpu = []
 
-# Arrays initially contain filenames.
-# After extraction, they will contain dictionaries.
-var swarm_constants:  Array = ["orbital_boids.json", "loose_migration.json"]
-var behaviour_weights: Array = ["orbital_boids.json", "loose_migration.json"]
-var behaviour_masks:   Array = ["default.json", "default.json"]
-var interaction_masks: Array = ["default.json", "default.json"]
-var swarm_mesh: Array = ["cylinderboid.obj", "cylinderboid.obj"]
+# Raw config filenames (strings)
+var swarm_constants_files  : Array = ["orbital_boids.json", "loose_migration.json"]
+var behaviour_weights_files: Array = ["orbital_boids.json", "loose_migration.json"]
+var behaviour_masks_files  : Array = ["default.json", "default.json"]
+var interaction_masks_files: Array = ["default.json", "default.json"]
+var swarm_mesh_files       : Array = ["cylinderboid.obj", "cylinderboid.obj"]
 
 
 func _ready():
 	gpu_core = get_node("../GPU_SimulationCore")
 	config_handler = get_node("../ConfigHandler")
 
-	_create_swarms()
-	_extract_all_configs()
-
-
-# ---------------------------------------------------------
-# LOAD ALL CONFIGS FOR EACH SWARM
-# ---------------------------------------------------------
-
-func _extract_all_configs():
-	for i in range(len(swarms)):
-		var swarm = swarms[i]
-		print("Extracting configs for:", swarm.name)
-
-		# Load JSON dictionaries
-		swarm_constants[i]  = config_handler.extract_swarm_constants(swarm_constants[i])
-		behaviour_weights[i] = config_handler.extract_behaviour_weights(behaviour_weights[i])
-		behaviour_masks[i]   = config_handler.extract_behaviour_masks(behaviour_masks[i])
-		interaction_masks[i] = config_handler.extract_interaction_masks(interaction_masks[i])
-
-		# Load mesh separately
-		swarm_mesh[i] = config_handler.extract_mesh(swarm_mesh[i])
-
-		# Assign mesh to swarm (optional)
-		if swarm_mesh[i] != null:
-			swarm.mesh = swarm_mesh[i]
+	_discover_swarms()
+	_initialise_swarms()
 
 
 # ---------------------------------------------------------
 # DISCOVER SWARM CHILDREN
 # ---------------------------------------------------------
 
-func _create_swarms():
+func _discover_swarms():
 	for child in get_children():
 		if child.name.begins_with("Swarm"):
-			print("SwarmManager: detected:", child.name)
 			swarms.append(child)
+			print("SwarmManager: detected swarm:", child.name)
+
+
+# ---------------------------------------------------------
+# INITIALISE SWARMS
+# ---------------------------------------------------------
+
+func _initialise_swarms():
+	var gpu_params : Array = []
+	var offset := 0
+
+	for i in range(len(swarms)):
+		var swarm = swarms[i]
+
+		# --- Load raw JSON dictionaries ---
+		var constants  = config_handler.extract_swarm_constants(swarm_constants_files[i])
+		var weights    = config_handler.extract_behaviour_weights(behaviour_weights_files[i])
+		var masks      = config_handler.extract_behaviour_masks(behaviour_masks_files[i])
+		var interact   = config_handler.extract_interaction_masks(interaction_masks_files[i])
+
+		# --- Extract CPU‑side metadata ---
+		var count      = constants.get("boid_count", 100)
+		var mesh_path  = constants.get("boid_mesh_path", "biggerboid.obj")
+		var colour_arr = constants.get("boid_colour", [1,1,1,1])
+
+		# Load mesh
+		var mesh = config_handler.extract_mesh(swarm_mesh_files[i])
+		swarm.mesh = mesh
+
+		# Assign colour (renderer will use this)
+		swarm.colour = Color(colour_arr[0], colour_arr[1], colour_arr[2], colour_arr[3])
+
+		# Assign index range for GPU-driven rendering
+		swarm.start_index = offset
+		swarm.count = count
+
+		# --- Build GPU parameter block ---
+		gpu_params.append({
+			"start": offset,
+			"count": count,
+			"constants": constants,
+			"weights": weights,
+			"masks": masks,
+			"interactions": interact
+		})
+
+		offset += count
+
+	# --- Hand off to GPU simulation core ---
+	gpu_core.initialise_simulation(gpu_params)
 
 
 # ---------------------------------------------------------
@@ -63,27 +103,6 @@ func _create_swarms():
 # ---------------------------------------------------------
 
 func _process(delta):
-	_run_gpu_simulation(delta)
-	_read_gpu_data()
-	_distribute_slices()
-	_update_swarms()
-
-
-func _run_gpu_simulation(delta):
+	# Only run the GPU simulation.
+	# Renderer updates itself via GPU-driven shader.
 	gpu_core.simulate(delta)
-
-
-func _read_gpu_data():
-	positions_cpu = gpu_core.buffers.read_positions()
-	velocities_cpu = gpu_core.buffers.read_velocities()
-
-
-func _distribute_slices():
-	for swarm in swarms:
-		swarm.positions  = positions_cpu.slice(swarm.start_index, swarm.count)
-		swarm.velocities = velocities_cpu.slice(swarm.start_index, swarm.count)
-
-
-func _update_swarms():
-	for swarm in swarms:
-		swarm.update()
