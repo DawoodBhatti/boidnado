@@ -24,6 +24,7 @@ var advance_held: bool = false   # ← NEW: hold-to-step
 
 # Total boid count across all swarms
 var boid_count: int = 0
+var grid_cell_size : float = 4.0
 
 # Config
 @export var swarm1_config: String = "orbital_boids.json"

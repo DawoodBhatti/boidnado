@@ -29,6 +29,8 @@ var behaviour_masks_files  : Array = ["default.json", "default.json"]
 var interaction_masks_files: Array = ["default.json", "default.json"]
 var swarm_mesh_files       : Array = ["cylinderboid.obj", "cylinderboid.obj"]
 
+# Set grid size
+var grid_cell_size : float = 5.0
 
 func _ready():
 	gpu_core = get_node("../GPU_SimulationCore")
@@ -54,7 +56,7 @@ func _discover_swarms():
 # ---------------------------------------------------------
 
 func _initialise_swarms():
-	var gpu_params : Array = []
+	var swarm_params_gpu : Array = []
 	var offset := 0
 
 	for i in range(len(swarms)):
@@ -83,7 +85,7 @@ func _initialise_swarms():
 		swarm.count = count
 
 		# --- Build GPU parameter block ---
-		gpu_params.append({
+		swarm_params_gpu.append({
 			"start": offset,
 			"count": count,
 			"constants": constants,
@@ -95,7 +97,9 @@ func _initialise_swarms():
 		offset += count
 
 	# --- Hand off to GPU simulation core ---
-	gpu_core.initialise_simulation(gpu_params)
+	# --- but wait a frame until children have finished initialising
+	await get_tree().process_frame 
+	gpu_core.initialise_simulation(grid_cell_size, swarm_params_gpu)
 
 
 # ---------------------------------------------------------

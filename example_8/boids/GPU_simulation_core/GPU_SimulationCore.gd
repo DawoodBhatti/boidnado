@@ -27,6 +27,7 @@ var pass_grid_sort : Node
 var pass_grid_mapping : Node
 var pass_behaviour : Node
 var pass_integration : Node
+var pass_grid_test_pass : Node
 var pass_debug : Node
 var rd : RenderingDevice 
 
@@ -41,12 +42,13 @@ func _ready():
 
 	# All compute passes live under GPU_Passes
 	var passes = get_node("GPU_Passes")
-
-	pass_grid_assign   = passes.get_node("Pass_GridAssign")
-	pass_grid_sort     = passes.get_node("Pass_GridSort")
-	pass_grid_mapping  = passes.get_node("Pass_GridMapping")
-	pass_behaviour     = passes.get_node("Pass_Behaviour")
-	pass_integration   = passes.get_node("Pass_Integration")
+	
+	pass_grid_test_pass = passes.get_node("Pass_TestPass")
+	pass_grid_assign    = passes.get_node("Pass_GridAssign")
+	pass_grid_sort      = passes.get_node("Pass_GridSort")
+	pass_grid_mapping   = passes.get_node("Pass_GridMapping")
+	pass_behaviour      = passes.get_node("Pass_Behaviour")
+	pass_integration    = passes.get_node("Pass_Integration")
 
 	# NOTE:
 	# Other systems should *not* hold references to buffers directly.
@@ -60,7 +62,7 @@ func _ready():
 # INITIALISATION ENTRY POINT
 # ---------------------------------------------------------
 
-func initialise_simulation(gpu_params: Array):
+func initialise_simulation(grid_cell_size : float, swarm_params: Array):
 	"""
     Called once by SwarmManager after all configs are loaded.
     gpu_params is an array of dictionaries, each containing:
@@ -76,16 +78,16 @@ func initialise_simulation(gpu_params: Array):
       - Generates initial positions + velocities
       - Uploads them to GPU_Buffers
       - Uploads per-swarm constants (placeholder)
-    """
+	"""
 
 	# Compute total boid count
 	var total: int = 0
-	for p in gpu_params:
+	for p in swarm_params:
 		total += p["count"]
 
 	# Allocate CPU-side arrays
-	var positions := []
-	var velocities := []
+	var positions : Array = []
+	var velocities : Array = []
 	positions.resize(total)
 	velocities.resize(total)
 
@@ -102,14 +104,20 @@ func initialise_simulation(gpu_params: Array):
 			randf() * 2.0 - 1.0
 		)
 
-	# Upload initial data to GPU buffers
-	#buffers.upload_positions(positions)
-	#buffers.upload_velocities(velocities)
+	# pass initial data to buffers
+	buffers.set_positions(positions)
+	buffers.set_velocities(velocities)
 
-	# Upload per-swarm constants (placeholder)
-	#buffers.upload_swarm_params(gpu_params)
+	# pass grid cell size and per-swarm constants (placeholder)
+	buffers.set_params(grid_cell_size, swarm_params)
+	
+	# setup arrays required by shader to calculate grids and neighbours
+	buffers.set_index_and_cell_ids()
+	
+	#translate CPU side data into GPU side data
+	buffers.build_all_buffers()
 
-	print("GPU_SimulationCore: initialised", total, "boids")
+	print("GPU_SimulationCore: initialised ", total, " boids with grid_cell_size ", grid_cell_size)
 
 # ---------------------------------------------------------
 # MAIN SIMULATION STEP
@@ -125,20 +133,25 @@ func simulate(delta):
 
     The GPU writes directly into the storage buffers owned by GPU_Buffers.
     Other systems (Renderer, Debug tools) can read these buffers on demand.
-    """
-
+	"""
+	
+	print("GPU_SimulationCore: Running GPU Simulate")
+	
 	# TODO: finish building these systems before we can run final code
-	pass_debug.run()
+	 # 1. Run passes in order
+	#pass_grid_test_pass._dispatch_test_compute()
 	#pass_grid_assign.run()
 	#pass_grid_sort.run()
 	#pass_grid_mapping.run()
 	#pass_behaviour.run(delta)
 	#pass_integration.run(delta)
 
-	# After this point:
-	# - positions buffer contains updated boid positions
-	# - velocities buffer contains updated boid velocities
-	# - grid buffers contain updated spatial partitioning
-	#
-	# Renderer can now read these buffers directly in a shader.
-	# Debug tools can read them via buffers.read_positions(), etc.
+	# 2. Submit all GPU work
+	#rd.submit()
+
+	# 3. Sync only if CPU needs to read back
+	# (debug, renderer, CPU-side logic)
+	#rd.sync()
+
+	# 4. Debug readback (optional)
+	pass_debug.run()
