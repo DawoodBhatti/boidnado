@@ -1,12 +1,22 @@
 extends Node
 
 """
-GPU_Device is the low‑level GPU backend for this simulation engine.
-It acts as the Vulkan‑style device manager, responsible for creating 
-and owning all GPU‑side shader programs and compute pipelines.
+GPU_Device is the low‑level GPU backend for the simulation engine.
 
-This class does not run simulation logic, dispatch compute passes, or manage buffers.
-Instead, it provides the GPU execution primitives that the higher‑level systems rely on.
+It owns:
+  - the RenderingDevice (Vulkan‑style GPU context)
+  - all shader programs (SPIR‑V → shader RIDs)
+  - all compute pipelines (one per shader)
+
+It does NOT:
+  - manage buffers
+  - build uniform sets
+  - run compute passes
+  - know anything about simulation logic
+
+Higher‑level compute passes pull the pipelines they need and build
+their own uniform sets using GPU_Buffers. This keeps GPU_Device
+focused purely on GPU program creation and lifetime management.
 """
 
 # ---------------------------------------------------------
@@ -14,25 +24,28 @@ Instead, it provides the GPU execution primitives that the higher‑level system
 # ---------------------------------------------------------
 var rd : RenderingDevice
 
+
 # ---------------------------------------------------------
 # Shader resources (GLSL → SPIR-V)
 # ---------------------------------------------------------
-var test_compute      : Resource = load("res://example_8/boids/GPU_simulation_core/GPU_passes/test_compute.glsl")
-var grid_assign       : Resource = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_assign.glsl")
-#var grid_sort         : Resource = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort.glsl")
-#var grid_mapping      : Resource = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_mapping.glsl")
-#var behaviour         : Resource = load("res://example_8/boids/GPU_simulation_core/GPU_passes/behaviour.glsl")
-#var integration       : Resource = load("res://example_8/boids/GPU_simulation_core/GPU_passes/integration.glsl")
+var test_compute : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/test_compute.glsl")
+var grid_assign  : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_assign.glsl")
+#var grid_sort    : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort.glsl")
+#var grid_mapping : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_mapping.glsl")
+#var behaviour    : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/behaviour.glsl")
+#var integration  : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/integration.glsl")
+
 
 # ---------------------------------------------------------
 # Shader RIDs (GPU-side shader handles)
 # ---------------------------------------------------------
-var test_shader_rid
+var test_compute_shader_rid
 var grid_assign_rid
 var grid_sort_rid
 var grid_mapping_rid
 var behaviour_rid
 var integration_rid
+
 
 # ---------------------------------------------------------
 # Compute pipelines (one per shader)
@@ -45,26 +58,34 @@ var behaviour_pipeline
 var integration_pipeline
 
 
-func _ready():
+func _ready() -> void:
+	# ---------------------------------------------------------
 	# Create the RenderingDevice (Vulkan-like GPU context)
+	# ---------------------------------------------------------
 	rd = RenderingServer.create_local_rendering_device()
-	print("GPU_Device: creating RenderingDevice")
+	print("GPU_Device: RenderingDevice created")
 
+	# ---------------------------------------------------------
+	# Load SPIR-V shaders and create shader RIDs
+	# ---------------------------------------------------------
 	_load_shaders()
-	print("GPU_Device: loading shaders")
+	print("GPU_Device: shaders loaded")
 
+	# ---------------------------------------------------------
+	# Create compute pipelines for each shader
+	# ---------------------------------------------------------
 	_create_compute_pipelines()
-	print("GPU_Device: creating compute pipelines")
+	print("GPU_Device: compute pipelines created")
 
 
 # ---------------------------------------------------------
 # Load SPIR-V and create shader RIDs
 # ---------------------------------------------------------
-func _load_shaders():
+func _load_shaders() -> void:
 
 	# Test pass
 	var test_spirv = test_compute.get_spirv()
-	test_shader_rid = rd.shader_create_from_spirv(test_spirv)
+	test_compute_shader_rid = rd.shader_create_from_spirv(test_spirv)
 
 	# Grid Assign
 	var assign_spirv = grid_assign.get_spirv()
@@ -90,10 +111,10 @@ func _load_shaders():
 # ---------------------------------------------------------
 # Create compute pipelines (one per shader)
 # ---------------------------------------------------------
-func _create_compute_pipelines():
+func _create_compute_pipelines() -> void:
 
 	# Test pass
-	test_compute_pipeline = rd.compute_pipeline_create(test_shader_rid)
+	test_compute_pipeline = rd.compute_pipeline_create(test_compute_shader_rid)
 
 	# Grid Assign
 	grid_assign_pipeline = rd.compute_pipeline_create(grid_assign_rid)

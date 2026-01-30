@@ -1,23 +1,78 @@
 extends Node
 
-var gpu_device
-var gpu_buffers
-var gpu_debug
+# ---------------------------------------------------------
+# Pass_TestPass.gd
+# ---------------------------------------------------------
+# A simple compute pass that:
+#   - reads boid_indices (binding 9)
+#   - writes sorted_boid_indices (binding 10)
+# ---------------------------------------------------------
 
-func _ready():
+var gpu_device : Node
+var gpu_buffers : Node
+
+var pipeline_rid : RID
+var uniform_set_rid : RID
+
+var _initialised := false
+
+
+func _ready() -> void:
 	gpu_device = get_node("../../GPU_Device")
 	gpu_buffers = get_node("../../GPU_Buffers")
-	gpu_debug = get_node("../../GPU_Debug")
+
+	# Cache pipeline
+	pipeline_rid = gpu_device.test_compute_pipeline
 
 
+# ---------------------------------------------------------
+# Lazy init: build uniform set on first run()
+# ---------------------------------------------------------
+func _init_pass(rd: RenderingDevice) -> void:
+	print("\n[TestPass] --- INIT PASS ---")
 
-func run(rendering_device, compute_list):
-	var rd = rendering_device
-	var list = compute_list
+	var u_boid_index : RDUniform = gpu_buffers.u_boid_index
+	var u_sorted_boid_index : RDUniform = gpu_buffers.u_sorted_boid_index
+
+	print("[TestPass] u_boid_index:", u_boid_index)
+	print("[TestPass] u_sorted_boid_index:", u_sorted_boid_index)
+
+	uniform_set_rid = rd.uniform_set_create(
+		[
+			u_boid_index,
+			u_sorted_boid_index
+		],
+		gpu_device.test_compute_shader_rid,  # IMPORTANT: shader RID, not pipeline RID
+		0
+	)
+
+	print("[TestPass] uniform_set_rid:", uniform_set_rid)
+	_initialised = true
+	print("[TestPass] INIT COMPLETE\n")
+
+
+# ---------------------------------------------------------
+# Public entry point
+# ---------------------------------------------------------
+func run(rd: RenderingDevice, compute_list: int, workgroup_count: int) -> void:
+	if not _initialised:
+		_init_pass(rd)
+
 	print("Pass_TestPass: dispatching test compute shader")
+	_dispatch(rd, compute_list, workgroup_count)
 
-	rd.compute_list_bind_compute_pipeline(list, gpu_device.test_compute_pipeline)
-	rd.compute_list_bind_uniform_set(list, gpu_buffers.uniform_set_rid, 0)
 
-	# local_size_x = 64, N = 100 → 2 workgroups
-	rd.compute_list_dispatch(list, 2, 1, 1)
+# ---------------------------------------------------------
+# Dispatch logic
+# ---------------------------------------------------------
+func _dispatch(rd: RenderingDevice, list: int, N: int) -> void:
+	print("\n[TestPass] --- DISPATCH ---")
+	print("[TestPass] pipeline_rid:", pipeline_rid)
+	print("[TestPass] uniform_set_rid:", uniform_set_rid)
+	print("[TestPass] workgroups:", N)
+
+	rd.compute_list_bind_compute_pipeline(list, pipeline_rid)
+	rd.compute_list_bind_uniform_set(list, uniform_set_rid, 0)
+	rd.compute_list_dispatch(list, N, 1, 1)
+
+	print("[TestPass] DISPATCH COMPLETE\n")

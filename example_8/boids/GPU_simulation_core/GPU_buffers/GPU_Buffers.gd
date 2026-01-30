@@ -7,35 +7,67 @@ var gpu_device : Node
 var rd : RenderingDevice
 
 # ---------------------------------------------------------
-# CPU-side cached data
+# CPU-side cached data (SoA layout)
 # ---------------------------------------------------------
-var initial_positions : Array = []
-var initial_velocities : Array = []
+var initial_positions_x : Array = []
+var initial_positions_y : Array = []
+var initial_positions_z : Array = []
+
+var initial_velocities_x : Array = []
+var initial_velocities_y : Array = []
+var initial_velocities_z : Array = []
+
 var boid_indices : PackedInt32Array = []
 var cell_ids : PackedInt32Array = []
 var sorted_boid_indices : PackedInt32Array = []
 var sorted_cell_ids : PackedInt32Array = []
+
 var grid_cell_size : float = 0.0
-var swarm_parameters : Array  = []
+var swarm_parameters : Array = []
 var swarm_count : int = 0
 var total_boids : int = 0
 
 # ---------------------------------------------------------
-# GPU buffers
+# GPU buffers (SoA layout)
 # ---------------------------------------------------------
-var positions_buffer : RID
-var velocities_buffer : RID
+var positions_x_buffer : RID
+var positions_y_buffer : RID
+var positions_z_buffer : RID
+
+var velocities_x_buffer : RID
+var velocities_y_buffer : RID
+var velocities_z_buffer : RID
+
 var swarm_params_buffer : RID
 var boid_to_swarm_buffer : RID
 var global_params_buffer : RID
+
 var boid_indices_buffer : RID
 var sorted_boid_indices_buffer : RID
+
 var cell_id_buffer : RID
 var sorted_cell_id_buffer : RID
 
+# ---------------------------------------------------------
+# RDUniform descriptors (one per buffer)
+# ---------------------------------------------------------
+var u_pos_x : RDUniform
+var u_pos_y : RDUniform
+var u_pos_z : RDUniform
 
-# Uniform set RID
-var uniform_set_rid : RID
+var u_vel_x : RDUniform
+var u_vel_y : RDUniform
+var u_vel_z : RDUniform
+
+var u_swarm : RDUniform
+var u_map : RDUniform
+var u_global : RDUniform
+
+var u_boid_index : RDUniform
+var u_sorted_boid_index : RDUniform
+
+var u_cell_id : RDUniform
+var u_sorted_cell_id : RDUniform
 
 
 func _ready() -> void:
@@ -58,15 +90,21 @@ func set_index_and_cell_ids() -> void:
 		sorted_cell_ids.append(0)
 
 # ---------------------------------------------------------
-# Set per-boid data (positions, velocities)
+# Set per-boid data (positions, velocities) in SoA layout
 # ---------------------------------------------------------
-func set_positions(positions : Array) -> void:
-	initial_positions = positions
+
+func set_positions_soa(pos_x : Array, pos_y : Array, pos_z : Array) -> void:
+	# Store CPU-side SoA arrays
+	initial_positions_x = pos_x
+	initial_positions_y = pos_y
+	initial_positions_z = pos_z
 
 
-func set_velocities(velocities : Array) -> void:
-	initial_velocities = velocities
-
+func set_velocities_soa(vel_x : Array, vel_y : Array, vel_z : Array) -> void:
+	# Store CPU-side SoA arrays
+	initial_velocities_x = vel_x
+	initial_velocities_y = vel_y
+	initial_velocities_z = vel_z
 
 # ---------------------------------------------------------
 # Set cell_size and per-swarm parameters 
@@ -86,57 +124,113 @@ func set_params(cell_size : float, swarm_parameters_in : Array) -> void:
 	print("GPU_Buffers: swarms =", swarm_count)
 
 
+func _validate_inputs() -> void:
+	# ---------------------------------------------------------
+	# Ensure all SoA arrays exist and contain data
+	# If any of these are empty, the simulation cannot proceed.
+	# ---------------------------------------------------------
+	assert(not initial_positions_x.is_empty(), "positions_x not supplied")
+	assert(not initial_positions_y.is_empty(), "positions_y not supplied")
+	assert(not initial_positions_z.is_empty(), "positions_z not supplied")
+
+	assert(not initial_velocities_x.is_empty(), "velocities_x not supplied")
+	assert(not initial_velocities_y.is_empty(), "velocities_y not supplied")
+	assert(not initial_velocities_z.is_empty(), "velocities_z not supplied")
+
+	# ---------------------------------------------------------
+	# Ensure each SoA component array matches total_boids.
+	# This guarantees that every boid has a valid x/y/z entry.
+	# ---------------------------------------------------------
+	assert(initial_positions_x.size() == total_boids, "positions_x length mismatch")
+	assert(initial_positions_y.size() == total_boids, "positions_y length mismatch")
+	assert(initial_positions_z.size() == total_boids, "positions_z length mismatch")
+
+	assert(initial_velocities_x.size() == total_boids, "velocities_x length mismatch")
+	assert(initial_velocities_y.size() == total_boids, "velocities_y length mismatch")
+	assert(initial_velocities_z.size() == total_boids, "velocities_z length mismatch")
+
+	# ---------------------------------------------------------
+	# Internal consistency check:
+	# All position arrays must match each other,
+	# and all velocity arrays must match each other.
+	# This protects against partial uploads or corrupted state.
+	# ---------------------------------------------------------
+	assert(initial_positions_x.size() == initial_positions_y.size(), "position x/y mismatch")
+	assert(initial_positions_y.size() == initial_positions_z.size(), "position y/z mismatch")
+
+	assert(initial_velocities_x.size() == initial_velocities_y.size(), "velocity x/y mismatch")
+	assert(initial_velocities_y.size() == initial_velocities_z.size(), "velocity y/z mismatch")
+
+	# ---------------------------------------------------------
+	# Validate swarm parameters exist.
+	# These define per-swarm constants and are required for GPU setup.
+	# ---------------------------------------------------------
+	assert(not swarm_parameters.is_empty(), "swarm parameters not supplied")
+
+	# ---------------------------------------------------------
+	# Validate grid cell size.
+	# A zero or negative cell size would break grid assignment.
+	# ---------------------------------------------------------
+	assert(grid_cell_size > 0.0, "grid cell size invalid")
+
+
 # ---------------------------------------------------------
 # Build all buffers and uniform 
 # ---------------------------------------------------------
 func build_all_buffers():
+	_validate_inputs()
 
-	if len(initial_positions) == 0 or len(initial_velocities) == 0:
-		push_error("positions or velocity array not supplied")
-		return
-	elif len(initial_positions) != total_boids or len(initial_velocities) != total_boids:
-		push_error("length of positions or velocities do not match total boid count")
-		return
-	elif len(initial_positions) != len(initial_velocities):
-		push_error("length of positions mismatch with length of array")
-		return
-	elif len(swarm_parameters) == 0:
-		push_error("paramaters not supplied")
-		return
-	elif grid_cell_size <= 0:
-		push_error("grid cell size not specified correctly")
-		return
-
-	_allocate_boid_buffers()
+	_allocate_position_buffers()
+	_allocate_velocity_buffers()
 	_allocate_swarm_params_buffer()
 	_allocate_boid_to_swarm_buffer()
 	_allocate_global_params_buffer()
 	_allocate_boid_index_and_cell_id_buffers()
-
-	_create_uniform_set()
+	_build_uniform_descriptors()
 
 
 # ---------------------------------------------------------
-# Allocate positions + velocities buffers
+# Allocate position buffers (SoA: x, y, z)
 # ---------------------------------------------------------
-func _allocate_boid_buffers() -> void:
-	# Each boid has a Vector3 (3 floats = 12 bytes)
-	var pos_byte_count : int = total_boids * 3 * 4
-	var vel_byte_count : int = total_boids * 3 * 4
+func _allocate_position_buffers() -> void:
+	# Each component is a float (4 bytes)
+	var byte_count : int = total_boids * 4
 
-	positions_buffer = rd.storage_buffer_create(pos_byte_count)
-	velocities_buffer = rd.storage_buffer_create(vel_byte_count)
+	# Create three separate SSBOs for x, y, z
+	positions_x_buffer = rd.storage_buffer_create(byte_count)
+	positions_y_buffer = rd.storage_buffer_create(byte_count)
+	positions_z_buffer = rd.storage_buffer_create(byte_count)
+
+	# Upload CPU-side SoA arrays into GPU buffers
+	var x_bytes : PackedByteArray = PackedFloat32Array(initial_positions_x).to_byte_array()
+	var y_bytes : PackedByteArray = PackedFloat32Array(initial_positions_y).to_byte_array()
+	var z_bytes : PackedByteArray = PackedFloat32Array(initial_positions_z).to_byte_array()
+
+	rd.buffer_update(positions_x_buffer, 0, x_bytes.size(), x_bytes)
+	rd.buffer_update(positions_y_buffer, 0, y_bytes.size(), y_bytes)
+	rd.buffer_update(positions_z_buffer, 0, z_bytes.size(), z_bytes)
 
 
-	# Flatten positions into a PackedByteArray
-	var pos_data : PackedByteArray = PackedVector3Array(initial_positions).to_byte_array()
-	rd.buffer_update(positions_buffer, 0, pos_data.size(), pos_data)
+# ---------------------------------------------------------
+# Allocate velocity buffers (SoA: x, y, z)
+# ---------------------------------------------------------
+func _allocate_velocity_buffers() -> void:
+	# Each component is a float (4 bytes)
+	var byte_count : int = total_boids * 4
 
+	# Create three separate SSBOs for x, y, z
+	velocities_x_buffer = rd.storage_buffer_create(byte_count)
+	velocities_y_buffer = rd.storage_buffer_create(byte_count)
+	velocities_z_buffer = rd.storage_buffer_create(byte_count)
 
-	# Flatten velocities into a PackedByteArray
-	var vel_data : PackedByteArray = PackedVector3Array(initial_velocities).to_byte_array()
-	rd.buffer_update(velocities_buffer, 0, vel_data.size(), vel_data)
-	
+	# Upload CPU-side SoA arrays into GPU buffers
+	var x_bytes : PackedByteArray = PackedFloat32Array(initial_velocities_x).to_byte_array()
+	var y_bytes : PackedByteArray = PackedFloat32Array(initial_velocities_y).to_byte_array()
+	var z_bytes : PackedByteArray = PackedFloat32Array(initial_velocities_z).to_byte_array()
+
+	rd.buffer_update(velocities_x_buffer, 0, x_bytes.size(), x_bytes)
+	rd.buffer_update(velocities_y_buffer, 0, y_bytes.size(), y_bytes)
+	rd.buffer_update(velocities_z_buffer, 0, z_bytes.size(), z_bytes)
 	
 # ---------------------------------------------------------
 # Build SwarmParams buffer (one struct per swarm)
@@ -222,14 +316,15 @@ func _allocate_boid_to_swarm_buffer() -> void:
 # Global params buffer (currently only cell_size)
 # ---------------------------------------------------------
 func _allocate_global_params_buffer() -> void:
-	var floats : PackedFloat32Array = PackedFloat32Array()
-	floats.append(grid_cell_size)
+	var ints := PackedInt32Array()
+	ints.resize(4)  # std140: one 16-byte slot
+	ints[0] = int(grid_cell_size)
 
-	var byte_size : int = floats.size() * 4
-	global_params_buffer = rd.storage_buffer_create(byte_size)
-	rd.buffer_update(global_params_buffer, 0, byte_size, floats.to_byte_array())
-
-
+	var byte_size := ints.size() * 4  # 16 bytes
+	global_params_buffer = rd.uniform_buffer_create(byte_size)
+	rd.buffer_update(global_params_buffer, 0, byte_size, ints.to_byte_array())
+	
+	
 # ---------------------------------------------------------
 # Boid index and cell_id buffers used in calculating grids/neighbours
 # ---------------------------------------------------------
@@ -267,72 +362,95 @@ func _allocate_boid_index_and_cell_id_buffers() -> void:
 	sorted_cell_id_buffer = rd.storage_buffer_create(bytes_size)
 	rd.buffer_update(sorted_cell_id_buffer, 0, bytes_size, sorted_cell_id_bytes)
 
-
 # ---------------------------------------------------------
-# Create the uniform set (assign buffers to bindings)
-# which contains inputs, outputs and constants
+# Build RDUniform descriptors for all GPU buffers
 # ---------------------------------------------------------
-func _create_uniform_set() -> void:
-	# Binding 0 → positions buffer
-	var u_pos : RDUniform = RDUniform.new()
-	u_pos.binding = 0
-	u_pos.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
-	u_pos.add_id(positions_buffer)
+# Each descriptor:
+#   - is stored as a class variable
+#   - contains the correct binding index (global ABI)
+#   - references the GPU buffer RID
+#
+# Compute passes will pull these descriptors and assemble
+# their own uniform sets using the bindings defined here.
+# ---------------------------------------------------------
+func _build_uniform_descriptors() -> void:
 
-	# Binding 1 → velocities buffer
-	var u_vel : RDUniform = RDUniform.new()
-	u_vel.binding = 1
-	u_vel.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
-	u_vel.add_id(velocities_buffer)
+	# ---------------------------------------------------------
+	# Position buffers (SoA: x, y, z)
+	# ---------------------------------------------------------
+	u_pos_x = RDUniform.new()
+	u_pos_x.binding = 0
+	u_pos_x.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	u_pos_x.add_id(positions_x_buffer)
 
-	# Binding 2 → swarm parameters for values common within swarms
-	var u_swarm : RDUniform = RDUniform.new()
-	u_swarm.binding = 2
+	u_pos_y = RDUniform.new()
+	u_pos_y.binding = 1
+	u_pos_y.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	u_pos_y.add_id(positions_y_buffer)
+
+	u_pos_z = RDUniform.new()
+	u_pos_z.binding = 2
+	u_pos_z.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	u_pos_z.add_id(positions_z_buffer)
+
+
+	# ---------------------------------------------------------
+	# Velocity buffers (SoA: x, y, z)
+	# ---------------------------------------------------------
+	u_vel_x = RDUniform.new()
+	u_vel_x.binding = 3
+	u_vel_x.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	u_vel_x.add_id(velocities_x_buffer)
+
+	u_vel_y = RDUniform.new()
+	u_vel_y.binding = 4
+	u_vel_y.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	u_vel_y.add_id(velocities_y_buffer)
+
+	u_vel_z = RDUniform.new()
+	u_vel_z.binding = 5
+	u_vel_z.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	u_vel_z.add_id(velocities_z_buffer)
+
+
+	# ---------------------------------------------------------
+	# Swarm + global parameters
+	# ---------------------------------------------------------
+	u_swarm = RDUniform.new()
+	u_swarm.binding = 6
 	u_swarm.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_swarm.add_id(swarm_params_buffer)
 
-	# Binding 3 → boid global index to swarm conversion buffer 
-	var u_map : RDUniform = RDUniform.new()
-	u_map.binding = 3
+	u_map = RDUniform.new()
+	u_map.binding = 7
 	u_map.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_map.add_id(boid_to_swarm_buffer)
 
-	# Binding 4 → global parameters buffer for values common between swarms
-	var u_global : RDUniform = RDUniform.new()
-	u_global.binding = 4
-	u_global.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	u_global = RDUniform.new()
+	u_global.binding = 8
+	u_global.uniform_type = RenderingDevice.UNIFORM_TYPE_UNIFORM_BUFFER
 	u_global.add_id(global_params_buffer)
-	
-	
-	# Binding 5 → index ids used to create grid and allow efficient neighbour mapping
-	var u_boid_index: RDUniform = RDUniform.new()
-	u_boid_index.binding = 5
+
+
+	# ---------------------------------------------------------
+	# Grid + sorted grid buffers
+	# ---------------------------------------------------------
+	u_boid_index = RDUniform.new()
+	u_boid_index.binding = 9
 	u_boid_index.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_boid_index.add_id(boid_indices_buffer)
-	
-	# Binding 6 → sorted index ids used to create grid and allow efficient neighbour mapping
-	var u_sorted_boid_index: RDUniform = RDUniform.new()
-	u_sorted_boid_index.binding = 6
+
+	u_sorted_boid_index = RDUniform.new()
+	u_sorted_boid_index.binding = 10
 	u_sorted_boid_index.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_sorted_boid_index.add_id(sorted_boid_indices_buffer)
 
-	# Binding 7 → cell_ids used to create grid and allow efficient neighbour mapping
-	var u_cell_id : RDUniform = RDUniform.new()
-	u_cell_id.binding = 7
+	u_cell_id = RDUniform.new()
+	u_cell_id.binding = 11
 	u_cell_id.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_cell_id.add_id(cell_id_buffer)
-	
-	# Binding 8 → sorted cell_ids used to create grid and allow efficient neighbour mapping
-	var u_sorted_cell_id : RDUniform = RDUniform.new()
-	u_sorted_cell_id.binding = 8
+
+	u_sorted_cell_id = RDUniform.new()
+	u_sorted_cell_id.binding = 12
 	u_sorted_cell_id.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_sorted_cell_id.add_id(sorted_cell_id_buffer)
-	
-
-	# Create the uniform set using which is a register created that maps which bindings connect to the buffers we have allocated
-	# It is a requirement of Godot by Vulkan
-	uniform_set_rid = rd.uniform_set_create(
-		[u_pos, u_vel, u_swarm, u_map, u_global, u_boid_index, u_sorted_boid_index, u_cell_id, u_sorted_cell_id],
-		gpu_device.test_shader_rid,
-		0
-	)

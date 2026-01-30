@@ -1,59 +1,82 @@
 extends Node
+
 """
 GPU_SimulationCore.gd
 ---------------------
 
-This node is the *central access point* for all GPU simulation data.
+This node is the *orchestrator* of the GPU simulation pipeline.
 
 ARCHITECTURE:
- - GPU_SimulationCore owns GPU buffers.
- - All other systems (SwarmManager, Renderer, Debug tools) access buffers
-   *through this node* instead of receiving references.
- - No CPU system updates transforms or slices arrays instead we use the GPU_Debug node,
- - also accessed through this node.
- - Renderer can read GPU buffers directly for GPU-driven rendering.
 
-This keeps the simulation pipeline clean, scalable, and GPU-native.
+ - GPU_Device owns the RenderingDevice, shaders, and compute pipelines.
+ - GPU_Buffers owns all GPU storage buffers and RDUniform descriptors.
+ - Each compute pass (GridAssign, GridSort, Behaviour, etc.)
+     * pulls buffers from GPU_Buffers
+     * pulls pipelines from GPU_Device
+     * builds its own uniform set
+     * dispatches its own compute work
+
+GPU_SimulationCore does NOT:
+ - build uniform sets
+ - create pipelines
+ - manage shader layouts
+ - touch GPU buffers directly
+
+It simply:
+ - initialises buffers once
+ - computes workgroup counts
+ - calls each compute pass in sequence
+ - exposes GPU_Buffers to other systems (Renderer, Debug)
 """
 
 # ---------------------------------------------------------
-# CHILD NODES (GPU subsystems)
+# Simulation parameters
 # ---------------------------------------------------------
+var total_boids : int = 0
+var workgroup_count : int = 0
+var local_group_size : int = 64
 
-var device : Node            # GPU device wrapper (RenderingDevice)
-var buffers : Node           # GPU_Buffers: owns all storage buffers
+
+# ---------------------------------------------------------
+# Child nodes (GPU subsystems)
+# ---------------------------------------------------------
+var device : Node              # GPU_Device (RenderingDevice + pipelines)
+var buffers : Node             # GPU_Buffers (storage buffers + RDUniform descriptors)
 var pass_grid_assign : Node
 var pass_grid_sort : Node
 var pass_grid_mapping : Node
 var pass_behaviour : Node
 var pass_integration : Node
-var pass_grid_test_pass : Node
+var pass_test : Node
 var pass_debug : Node
-var rd : RenderingDevice 
+
+var rd : RenderingDevice       # Cached RenderingDevice reference
 
 
-func _ready():
-	# GPU device, buffer owner and debug node
-	device             = get_node("GPU_Device")
-	buffers            = get_node("GPU_Buffers")
-	pass_debug         = get_node("GPU_Debug")
+func _ready() -> void:
+	# ---------------------------------------------------------
+	# Cache subsystem references
+	# ---------------------------------------------------------
+	device  = get_node("GPU_Device")
+	buffers = get_node("GPU_Buffers")
+	pass_debug = get_node("GPU_Debug")
 
 	rd = device.rd
 
 	# All compute passes live under GPU_Passes
 	var passes = get_node("GPU_Passes")
-	
-	pass_grid_test_pass = passes.get_node("Pass_TestPass")
-	pass_grid_assign    = passes.get_node("Pass_GridAssign")
-	pass_grid_sort      = passes.get_node("Pass_GridSort")
-	pass_grid_mapping   = passes.get_node("Pass_GridMapping")
-	pass_behaviour      = passes.get_node("Pass_Behaviour")
-	pass_integration    = passes.get_node("Pass_Integration")
+
+	pass_test         = passes.get_node("Pass_TestPass")
+	pass_grid_assign  = passes.get_node("Pass_GridAssign")
+	pass_grid_sort    = passes.get_node("Pass_GridSort")
+	pass_grid_mapping = passes.get_node("Pass_GridMapping")
+	pass_behaviour    = passes.get_node("Pass_Behaviour")
+	pass_integration  = passes.get_node("Pass_Integration")
 
 	# NOTE:
-	# Other systems should *not* hold references to buffers directly.
-	# They should always access them via:
-	#    get_node("RootMaster/Boids/GPU_SimulationCore").buffers
+	# Other systems (Renderer, Debug tools) should access GPU buffers
+	# ONLY through:
+	#     get_node("RootMaster/Boids/GPU_SimulationCore").buffers
 	#
 	# This ensures a single source of truth for GPU data.
 
@@ -61,101 +84,107 @@ func _ready():
 # ---------------------------------------------------------
 # INITIALISATION ENTRY POINT
 # ---------------------------------------------------------
-
-func initialise_simulation(grid_cell_size : float, swarm_params: Array):
+func initialise_simulation(grid_cell_size : float, swarm_params : Array) -> void:
 	"""
-    Called once by SwarmManager after all configs are loaded.
-    gpu_params is an array of dictionaries, each containing:
-      - start: global start index
-      - count: number of boids in this swarm
-      - constants: swarm_constants JSON
-      - weights: behaviour_weights JSON
-      - masks: behaviour_masks JSON
-      - interactions: interaction_masks JSON
+	Called once by SwarmManager after all configs are loaded.
 
-    This function:
-      - Computes total boid count
-      - Generates initial positions + velocities
-      - Uploads them to GPU_Buffers
-      - Uploads per-swarm constants (placeholder)
+	This function:
+	  - Computes total boid count
+	  - Generates initial positions + velocities (CPU-side)
+	  - Uploads them to GPU_Buffers
+	  - Uploads per-swarm constants
+	  - Allocates grid + index buffers
+	  - Builds all GPU-side storage buffers
 	"""
 
 	# Compute total boid count
-	var total: int = 0
+	total_boids = 0
 	for p in swarm_params:
-		total += p["count"]
+		total_boids += p["count"]
 
-	# Allocate CPU-side arrays
-	var positions : Array = []
-	var velocities : Array = []
-	positions.resize(total)
-	velocities.resize(total)
+	# Compute number of workgroups for compute dispatch
+	workgroup_count = ceil(total_boids / float(local_group_size))
 
-	# Fill with simple initial values (placeholder)
-	for i in range(total):
-		positions[i] = Vector3(
-			randf() * 10.0,
-			randf() * 10.0,
-			randf() * 10.0
-		)
-		velocities[i] = Vector3(
-			randf() * 2.0 - 1.0,
-			randf() * 2.0 - 1.0,
-			randf() * 2.0 - 1.0
-		)
+	# ---------------------------------------------------------
+	# Allocate CPU-side SoA arrays
+	# ---------------------------------------------------------
+	var pos_x := []
+	var pos_y := []
+	var pos_z := []
 
-	# pass initial data to buffers
-	buffers.set_positions(positions)
-	buffers.set_velocities(velocities)
+	var vel_x := []
+	var vel_y := []
+	var vel_z := []
 
-	# pass grid cell size and per-swarm constants (placeholder)
+	pos_x.resize(total_boids)
+	pos_y.resize(total_boids)
+	pos_z.resize(total_boids)
+
+	vel_x.resize(total_boids)
+	vel_y.resize(total_boids)
+	vel_z.resize(total_boids)
+
+	# Fill with placeholder initial values
+	for i in range(total_boids):
+		pos_x[i] = randf() * 10.0
+		pos_y[i] = randf() * 10.0
+		pos_z[i] = randf() * 10.0
+
+		vel_x[i] = randf() * 2.0 - 1.0
+		vel_y[i] = randf() * 2.0 - 1.0
+		vel_z[i] = randf() * 2.0 - 1.0
+
+	# ---------------------------------------------------------
+	# Upload CPU-side data to GPU_Buffers
+	# ---------------------------------------------------------
+	buffers.set_positions_soa(pos_x, pos_y, pos_z)
+	buffers.set_velocities_soa(vel_x, vel_y, vel_z)
+
 	buffers.set_params(grid_cell_size, swarm_params)
-	
-	# setup arrays required by shader to calculate grids and neighbours
 	buffers.set_index_and_cell_ids()
-	
-	#translate CPU side data into GPU side data
+
+	# Allocate and upload all GPU buffers
 	buffers.build_all_buffers()
 
-	print("GPU_SimulationCore: initialised ", total, " boids with grid_cell_size ", grid_cell_size)
+	print("GPU_SimulationCore: initialised ", total_boids,
+		  " boids with grid_cell_size ", grid_cell_size)
+
 
 # ---------------------------------------------------------
 # MAIN SIMULATION STEP
 # ---------------------------------------------------------
-
-func simulate(delta):
+func simulate(delta : float) -> void:
 	"""
-    Runs the full GPU simulation pipeline for one frame.
+	Runs the full GPU simulation pipeline for one frame.
 
-    No CPU reads occur here.
-    No transforms are updated here.
-    No slicing or per-swarm logic occurs here.
-
-    The GPU writes directly into the storage buffers owned by GPU_Buffers.
-    Other systems (Renderer, Debug tools) can read these buffers on demand.
+	No CPU reads occur here.
+	The GPU writes directly into the storage buffers owned by GPU_Buffers.
+	Other systems (Renderer, Debug tools) can read these buffers on demand.
 	"""
-	
-	print("GPU_SimulationCore: Running GPU Simulate")
-	
+
+	print("GPU_SimulationCore: simulate() with workgroups = ", workgroup_count)
+
 	var compute_list = rd.compute_list_begin()
-	
-	# TODO: finish building these systems before we can run final code
-	 # 1. Run passes in order
-	pass_grid_test_pass.run(rd, compute_list)
-	#pass_grid_assign.run()
-	#pass_grid_sort.run()
-	#pass_grid_mapping.run()
-	#pass_behaviour.run(delta)
-	#pass_integration.run(delta)
 
+	# ---------------------------------------------------------
+	# Execute compute passes in order
+	# Each pass builds its own uniform set and dispatches its own pipeline
+	# ---------------------------------------------------------
+	#pass_test.run(rd, compute_list, workgroup_count)
+	pass_grid_assign.run(rd, compute_list, workgroup_count)
+	#pass_grid_sort.run(rd, compute_list, workgroup_count)
+	#pass_grid_mapping.run(rd, compute_list, workgroup_count)
+	#pass_behaviour.run(rd, compute_list, workgroup_count)
+	#pass_integration.run(rd, compute_list, workgroup_count)
 
-	# 2. Submit all GPU work
+	# ---------------------------------------------------------
+	# Submit GPU work
+	# ---------------------------------------------------------
 	rd.compute_list_end()
 	rd.submit()
 
-	# 3. Sync only if CPU needs to read back
-	# (debug, renderer, CPU-side logic)
+	# Sync only if CPU needs readback (debug, renderer)
 	rd.sync()
 
-	# 4. Debug readback (optional)
+	# Optional debug readback
 	pass_debug.run()

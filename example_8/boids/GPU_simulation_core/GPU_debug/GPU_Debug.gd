@@ -1,20 +1,17 @@
 extends Node
 
-var gpu_buffers : Node
+var gpu_buffers
 
-
-func _ready() -> void:
+func _ready():
 	gpu_buffers = get_node("../GPU_Buffers")
 
 
 # ---------------------------------------------------------
 # Read + print all GPU buffers
 # ---------------------------------------------------------
-func run() -> void:
+func run():
 	print("GPU_Debug: GPU → CPU readback")
-	
-	# Ensure GPU has finished all compute work
-	
+
 	print_positions()
 	print_velocities()
 	print_swarm_params()
@@ -23,56 +20,64 @@ func run() -> void:
 	print_boid_index()
 	print_cell_id()
 
-# ---------------------------------------------------------
-# Positions buffer
-# ---------------------------------------------------------
-func print_positions() -> void:
-	var byte_data : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.positions_buffer)
-	var floats : PackedFloat32Array = byte_data.to_float32_array()
-
-	print("\n[Positions Buffer] (", floats.size() / 3, " boids)")
-	
-	for i in range(0, 10, 3):
-	#for i in range(0, floats.size(), 3):
-		var x : float = floats[i]
-		var y : float = floats[i + 1]
-		var z : float = floats[i + 2]
-		print("  Boid ", i / 3, ": (", x, ", ", y, ", ", z, ")")
-
-
 
 # ---------------------------------------------------------
-# Velocities buffer
+# Positions buffer (SoA: x, y, z)
 # ---------------------------------------------------------
-func print_velocities() -> void:
-	var byte_data : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.velocities_buffer)
-	var floats : PackedFloat32Array = byte_data.to_float32_array()
+func print_positions():
+	var x_bytes = gpu_buffers.rd.buffer_get_data(gpu_buffers.positions_x_buffer)
+	var y_bytes = gpu_buffers.rd.buffer_get_data(gpu_buffers.positions_y_buffer)
+	var z_bytes = gpu_buffers.rd.buffer_get_data(gpu_buffers.positions_z_buffer)
 
-	print("\n[Velocities Buffer] (", floats.size() / 3, " boids)")
+	var xs = x_bytes.to_float32_array()
+	var ys = y_bytes.to_float32_array()
+	var zs = z_bytes.to_float32_array()
 
-	for i in range(0, 10, 3):
-	#for i in range(0, floats.size(), 3):
-		var x : float = floats[i]
-		var y : float = floats[i + 1]
-		var z : float = floats[i + 2]
-		print("  Boid ", i / 3, ": (", x, ", ", y, ", ", z, ")")
+	print("\n[Positions Buffer] (", xs.size(), " boids)")
 
+	var limit = 10
+	if xs.size() < 10:
+		limit = xs.size()
+
+	for i in range(limit):
+		print("  Boid ", i, ": (", xs[i], ", ", ys[i], ", ", zs[i], ")")
+
+
+# ---------------------------------------------------------
+# Velocities buffer (SoA: x, y, z)
+# ---------------------------------------------------------
+func print_velocities():
+	var x_bytes = gpu_buffers.rd.buffer_get_data(gpu_buffers.velocities_x_buffer)
+	var y_bytes = gpu_buffers.rd.buffer_get_data(gpu_buffers.velocities_y_buffer)
+	var z_bytes = gpu_buffers.rd.buffer_get_data(gpu_buffers.velocities_z_buffer)
+
+	var xs = x_bytes.to_float32_array()
+	var ys = y_bytes.to_float32_array()
+	var zs = z_bytes.to_float32_array()
+
+	print("\n[Velocities Buffer] (", xs.size(), " boids)")
+
+	var limit = 10
+	if xs.size() < 10:
+		limit = xs.size()
+
+	for i in range(limit):
+		print("  Boid ", i, ": (", xs[i], ", ", ys[i], ", ", zs[i], ")")
 
 
 # ---------------------------------------------------------
 # Swarm parameters buffer
 # ---------------------------------------------------------
-func print_swarm_params() -> void:
-	var byte_data : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.swarm_params_buffer)
-	var floats : PackedFloat32Array = byte_data.to_float32_array()
+func print_swarm_params():
+	var byte_data = gpu_buffers.rd.buffer_get_data(gpu_buffers.swarm_params_buffer)
+	var floats = byte_data.to_float32_array()
 
 	print("\n[Swarm Params Buffer] (", gpu_buffers.swarm_count, " swarms)")
 
-	# Each swarm has 16 floats (based on your struct)
-	var floats_per_swarm : int = 16
+	var floats_per_swarm = 16
 
 	for s in range(gpu_buffers.swarm_count):
-		var base : int = s * floats_per_swarm
+		var base = s * floats_per_swarm
 
 		print("\n  Swarm ", s)
 		print("    start_index         = ", floats[base + 0])
@@ -95,65 +100,63 @@ func print_swarm_params() -> void:
 		print("    boundary_mask       = ", floats[base + 15])
 
 
-
 # ---------------------------------------------------------
 # Boid → Swarm mapping buffer
 # ---------------------------------------------------------
-func print_boid_to_swarm() -> void:
-	var byte_data : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.boid_to_swarm_buffer)
-	var ints : PackedInt32Array = byte_data.to_int32_array()
+func print_boid_to_swarm():
+	var byte_data = gpu_buffers.rd.buffer_get_data(gpu_buffers.boid_to_swarm_buffer)
+	var ints = byte_data.to_int32_array()
 
 	print("\n[Boid → Swarm Buffer] (", ints.size(), " entries)")
-	
-	for i in range(0, ints.size(), 50):
-	#for i in range(ints.size()):
-		print("  Boid ", i, " → Swarm ", ints[i])
 
+	var step = 50
+	if ints.size() < 50:
+		step = ints.size()
+
+	for i in range(0, ints.size(), step):
+		print("  Boid ", i, " → Swarm ", ints[i])
 
 
 # ---------------------------------------------------------
 # Global params buffer
 # ---------------------------------------------------------
-func print_global_params() -> void:
-	var byte_data : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.global_params_buffer)
-	var floats : PackedFloat32Array = byte_data.to_float32_array()
+func print_global_params():
+	var byte_data = gpu_buffers.rd.buffer_get_data(gpu_buffers.global_params_buffer)
+	var floats = byte_data.to_float32_array()
 
 	print("\n[Global Params Buffer]")
 	print("  grid_cell_size = ", floats[0])
 
 
-
 # ---------------------------------------------------------
 # Boid indices buffers (regular and sorted)
 # ---------------------------------------------------------
-func print_boid_index() -> void:
-	var byte_data : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.boid_indices_buffer)
-	var ints : PackedInt32Array = byte_data.to_int32_array()
+func print_boid_index():
+	var byte_data = gpu_buffers.rd.buffer_get_data(gpu_buffers.boid_indices_buffer)
+	var ints = byte_data.to_int32_array()
 
 	print("\n[Boid Index Buffer (unsorted)]")
 	print(ints)
-	
-	var sorted_byte_data : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.sorted_boid_indices_buffer)
-	var ints_sorted : PackedInt32Array = sorted_byte_data.to_int32_array()
+
+	var sorted_byte_data = gpu_buffers.rd.buffer_get_data(gpu_buffers.sorted_boid_indices_buffer)
+	var ints_sorted = sorted_byte_data.to_int32_array()
 
 	print("\n[Boid Index Buffer (sorted)]")
 	print(ints_sorted)
-	
-	
-	
+
+
 # ---------------------------------------------------------
 # Cell id buffers (regular and sorted)
 # ---------------------------------------------------------
-func print_cell_id() -> void:
-	var byte_data : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.cell_id_buffer)
-	var ints : PackedInt32Array = byte_data.to_int32_array()
+func print_cell_id():
+	var byte_data = gpu_buffers.rd.buffer_get_data(gpu_buffers.cell_id_buffer)
+	var ints = byte_data.to_int32_array()
 
 	print("\n[Cell Id Buffer (unsorted)]")
 	print(ints)
-	
-	var byte_data_sorted : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.sorted_cell_id_buffer)
-	var ints_sorted : PackedInt32Array = byte_data_sorted.to_int32_array()
+
+	var byte_data_sorted = gpu_buffers.rd.buffer_get_data(gpu_buffers.sorted_cell_id_buffer)
+	var ints_sorted = byte_data_sorted.to_int32_array()
 
 	print("\n[Cell Id Buffer (sorted)]")
 	print(ints_sorted)
-	

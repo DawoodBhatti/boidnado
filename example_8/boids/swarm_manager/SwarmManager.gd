@@ -97,7 +97,7 @@ func _initialise_swarms():
 		offset += count
 
 	# --- Hand off to GPU simulation core ---
-	# --- but wait a frame until children have finished initialising
+	# --- but wait one process frame until children have finished initialising
 	await get_tree().process_frame 
 	gpu_core.initialise_simulation(grid_cell_size, swarm_params_gpu)
 
