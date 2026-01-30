@@ -183,8 +183,14 @@ func simulate(delta : float) -> void:
 	rd.compute_list_end()
 	rd.submit()
 
-	# Sync only if CPU needs readback (debug, renderer)
+	# Sync if CPU needs readback (debug, renderer) 
+	# Keep this in temporarily while we are building the pipeline but eventually:
+	# 	Future Improvement 1 — Fence-based scheduling (Vulkan-style)
+	#	Future Improvement 2 — Double-buffered GPU job
+	#	Future Improvement 4 — GPU job queue
+	
+	
 	rd.sync()
 
 	# Optional debug readback
-	pass_debug.run()
+	#pass_debug.run()

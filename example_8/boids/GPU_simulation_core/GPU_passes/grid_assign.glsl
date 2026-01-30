@@ -40,6 +40,7 @@ void main() {
 		return;
 
     // calculate the cell hash 
-   // cell_ids[idx] = int(x_positions[idx]) + int(y_positions[idx]) * cell_size + int(z_positions[idx]) * cell_size * cell_size;
-    cell_ids[idx] =  cell_size ;
+	//  cell_ids[idx] =  cell_size ; #test inputs
+	cell_ids[idx] = int(x_positions[idx]) + int(y_positions[idx]) * cell_size + int(z_positions[idx]) * cell_size * cell_size;
+
 }
