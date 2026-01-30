@@ -332,7 +332,7 @@ func _create_uniform_set() -> void:
 	# Create the uniform set using which is a register created that maps which bindings connect to the buffers we have allocated
 	# It is a requirement of Godot by Vulkan
 	uniform_set_rid = rd.uniform_set_create(
-		[u_pos, u_vel, u_swarm, u_map, u_global, u_boid_index, u_cell_id],
+		[u_pos, u_vel, u_swarm, u_map, u_global, u_boid_index, u_sorted_boid_index, u_cell_id, u_sorted_cell_id],
 		gpu_device.test_shader_rid,
 		0
 	)

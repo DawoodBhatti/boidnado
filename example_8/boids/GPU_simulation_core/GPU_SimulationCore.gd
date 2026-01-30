@@ -137,21 +137,25 @@ func simulate(delta):
 	
 	print("GPU_SimulationCore: Running GPU Simulate")
 	
+	var compute_list = rd.compute_list_begin()
+	
 	# TODO: finish building these systems before we can run final code
 	 # 1. Run passes in order
-	#pass_grid_test_pass._dispatch_test_compute()
+	pass_grid_test_pass.run(rd, compute_list)
 	#pass_grid_assign.run()
 	#pass_grid_sort.run()
 	#pass_grid_mapping.run()
 	#pass_behaviour.run(delta)
 	#pass_integration.run(delta)
 
+
 	# 2. Submit all GPU work
-	#rd.submit()
+	rd.compute_list_end()
+	rd.submit()
 
 	# 3. Sync only if CPU needs to read back
 	# (debug, renderer, CPU-side logic)
-	#rd.sync()
+	rd.sync()
 
 	# 4. Debug readback (optional)
 	pass_debug.run()

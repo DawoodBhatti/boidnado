@@ -3,24 +3,20 @@
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-// Binding 0 → input buffer (float array)
-layout(set = 0, binding = 0) buffer InputBuffer {
-    float input_data[];
+// Binding 5 → boid_indices (int array)
+layout(set = 0, binding = 5) buffer InputBuffer {
+    int boid_indices[];
 };
 
-// Binding 1 → constants buffer (float array)
-layout(set = 0, binding = 1) buffer ConstantsBuffer {
-    float constants[];
+// Binding 6 → sorted_boid_indices buffer (int array)
+layout(set = 0, binding = 6) buffer OutputBuffer {
+    int sorted_boid_indices[];
 };
 
-// Binding 2 → output buffer (float array)
-layout(set = 0, binding = 2) buffer OutputBuffer {
-    float output_data[];
-};
 
 void main() {
     uint idx = gl_GlobalInvocationID.x;
 
-    // Simple test: output = input + constants[0]
-    output_data[idx] = input_data[idx] + constants[0];
+    // Simple test: output = boid_indices + 1
+    sorted_boid_indices[idx] = boid_indices[idx] + 1;
 }
