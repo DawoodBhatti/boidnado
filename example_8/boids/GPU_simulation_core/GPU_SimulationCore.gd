@@ -126,13 +126,13 @@ func initialise_simulation(grid_cell_size : float, swarm_params : Array) -> void
 
 	# Fill with placeholder initial values
 	for i in range(total_boids):
-		pos_x[i] = randf() * 10.0
-		pos_y[i] = randf() * 10.0
-		pos_z[i] = randf() * 10.0
+		pos_x[i] = -5 + randf() * 10.0
+		pos_y[i] = -5 + randf() * 10.0
+		pos_z[i] = -5 + randf() * 10.0
 
-		vel_x[i] = randf() * 2.0 - 1.0
-		vel_y[i] = randf() * 2.0 - 1.0
-		vel_z[i] = randf() * 2.0 - 1.0
+		vel_x[i] = 0.5 + randf() 
+		vel_y[i] = 0.5 + randf() 
+		vel_z[i] = 0.5 + randf() 
 
 	# ---------------------------------------------------------
 	# Upload CPU-side data to GPU_Buffers
@@ -162,7 +162,7 @@ func simulate(delta : float) -> void:
 	Other systems (Renderer, Debug tools) can read these buffers on demand.
 	"""
 
-	print("GPU_SimulationCore: simulate() with workgroups = ", workgroup_count)
+	#print("GPU_SimulationCore: simulate() with workgroups = ", workgroup_count)
 
 	var compute_list = rd.compute_list_begin()
 
@@ -192,5 +192,6 @@ func simulate(delta : float) -> void:
 	
 	rd.sync()
 
+
 	# Optional debug readback
-	#pass_debug.run()
+	pass_debug.run()

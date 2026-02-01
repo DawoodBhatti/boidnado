@@ -93,7 +93,8 @@ func _initialise_swarms():
 			"masks": masks,
 			"interactions": interact
 		})
-
+		
+		
 		offset += count
 
 	# --- Hand off to GPU simulation core ---

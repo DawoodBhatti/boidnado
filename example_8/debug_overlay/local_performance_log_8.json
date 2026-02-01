@@ -184,5 +184,470 @@
 			}
 		},
 		"timestamp": "2026-01-30T16:36:36"
+	},
+	{
+		"runtime_seconds": 6.739,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 9.06666666666667,
+				"max": 9.94,
+				"min": 8.55
+			},
+			"Draws": {
+				"avg": 1.88888888888889,
+				"max": 2.0,
+				"min": 1.0
+			},
+			"FPS": {
+				"avg": 120.0,
+				"max": 120.0,
+				"min": 120.0
+			},
+			"RAM": {
+				"avg": 83.9911111111111,
+				"max": 84.0,
+				"min": 83.98
+			}
+		},
+		"timestamp": "2026-02-01T08:56:43"
+	},
+	{
+		"runtime_seconds": 12.979,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 64.3765,
+				"max": 72.22,
+				"min": 59.27
+			},
+			"Draws": {
+				"avg": 514.0,
+				"max": 514.0,
+				"min": 514.0
+			},
+			"FPS": {
+				"avg": 17.85,
+				"max": 19.0,
+				"min": 16.0
+			},
+			"RAM": {
+				"avg": 87.928,
+				"max": 87.93,
+				"min": 87.92
+			}
+		},
+		"timestamp": "2026-02-01T10:13:00"
+	},
+	{
+		"runtime_seconds": 3.573,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 23.83,
+				"max": 25.95,
+				"min": 22.77
+			},
+			"Draws": {
+				"avg": 8.0,
+				"max": 8.0,
+				"min": 8.0
+			},
+			"FPS": {
+				"avg": 52.6666666666667,
+				"max": 53.0,
+				"min": 52.0
+			},
+			"RAM": {
+				"avg": 85.5133333333333,
+				"max": 85.52,
+				"min": 85.51
+			}
+		},
+		"timestamp": "2026-02-01T10:13:49"
+	},
+	{
+		"runtime_seconds": 6.8,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 21.6788888888889,
+				"max": 23.97,
+				"min": 19.69
+			},
+			"Draws": {
+				"avg": 8.0,
+				"max": 8.0,
+				"min": 8.0
+			},
+			"FPS": {
+				"avg": 55.0,
+				"max": 56.0,
+				"min": 53.0
+			},
+			"RAM": {
+				"avg": 85.5211111111111,
+				"max": 85.53,
+				"min": 85.52
+			}
+		},
+		"timestamp": "2026-02-01T10:14:02"
+	},
+	{
+		"runtime_seconds": 8.34,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 16.7733333333333,
+				"max": 17.33,
+				"min": 16.05
+			},
+			"Draws": {
+				"avg": 8.0,
+				"max": 8.0,
+				"min": 8.0
+			},
+			"FPS": {
+				"avg": 120.0,
+				"max": 120.0,
+				"min": 120.0
+			},
+			"RAM": {
+				"avg": 85.545,
+				"max": 85.55,
+				"min": 85.54
+			}
+		},
+		"timestamp": "2026-02-01T10:16:01"
+	},
+	{
+		"runtime_seconds": 17.75,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 15.541935483871,
+				"max": 17.01,
+				"min": 14.77
+			},
+			"Draws": {
+				"avg": 8.0,
+				"max": 8.0,
+				"min": 8.0
+			},
+			"FPS": {
+				"avg": 120.0,
+				"max": 120.0,
+				"min": 120.0
+			},
+			"RAM": {
+				"avg": 85.5490322580645,
+				"max": 85.55,
+				"min": 85.54
+			}
+		},
+		"timestamp": "2026-02-01T10:16:25"
+	},
+	{
+		"runtime_seconds": 8.66,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 16.4138461538462,
+				"max": 18.15,
+				"min": 15.5
+			},
+			"Draws": {
+				"avg": 8.0,
+				"max": 8.0,
+				"min": 8.0
+			},
+			"FPS": {
+				"avg": 120.0,
+				"max": 120.0,
+				"min": 120.0
+			},
+			"RAM": {
+				"avg": 85.5476923076923,
+				"max": 85.55,
+				"min": 85.54
+			}
+		},
+		"timestamp": "2026-02-01T10:17:32"
+	},
+	{
+		"runtime_seconds": 2.015,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"Draws": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"FPS": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"RAM": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			}
+		},
+		"timestamp": "2026-02-01T10:20:21"
+	},
+	{
+		"runtime_seconds": 11.914,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 8.98473684210526,
+				"max": 10.61,
+				"min": 8.5
+			},
+			"Draws": {
+				"avg": 4.0,
+				"max": 4.0,
+				"min": 4.0
+			},
+			"FPS": {
+				"avg": 120.0,
+				"max": 120.0,
+				"min": 120.0
+			},
+			"RAM": {
+				"avg": 84.3568421052631,
+				"max": 84.36,
+				"min": 84.35
+			}
+		},
+		"timestamp": "2026-02-01T10:20:45"
+	},
+	{
+		"runtime_seconds": 3.875,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 8.80333333333333,
+				"max": 8.87,
+				"min": 8.67
+			},
+			"Draws": {
+				"avg": 4.0,
+				"max": 4.0,
+				"min": 4.0
+			},
+			"FPS": {
+				"avg": 120.0,
+				"max": 120.0,
+				"min": 120.0
+			},
+			"RAM": {
+				"avg": 84.35,
+				"max": 84.35,
+				"min": 84.35
+			}
+		},
+		"timestamp": "2026-02-01T10:21:01"
+	},
+	{
+		"runtime_seconds": 2.528,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 8.62,
+				"max": 8.62,
+				"min": 8.62
+			},
+			"Draws": {
+				"avg": 4.0,
+				"max": 4.0,
+				"min": 4.0
+			},
+			"FPS": {
+				"avg": 120.0,
+				"max": 120.0,
+				"min": 120.0
+			},
+			"RAM": {
+				"avg": 84.36,
+				"max": 84.36,
+				"min": 84.36
+			}
+		},
+		"timestamp": "2026-02-01T10:22:24"
+	},
+	{
+		"runtime_seconds": 3.718,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 8.49333333333333,
+				"max": 8.5,
+				"min": 8.49
+			},
+			"Draws": {
+				"avg": 2.0,
+				"max": 2.0,
+				"min": 2.0
+			},
+			"FPS": {
+				"avg": 120.333333333333,
+				"max": 121.0,
+				"min": 120.0
+			},
+			"RAM": {
+				"avg": 84.28,
+				"max": 84.28,
+				"min": 84.28
+			}
+		},
+		"timestamp": "2026-02-01T10:23:53"
+	},
+	{
+		"runtime_seconds": 2.128,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"Draws": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"FPS": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"RAM": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			}
+		},
+		"timestamp": "2026-02-01T10:24:36"
+	},
+	{
+		"runtime_seconds": 2.137,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"Draws": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"FPS": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"RAM": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			}
+		},
+		"timestamp": "2026-02-01T10:25:08"
+	},
+	{
+		"runtime_seconds": 2.616,
+		"summary": {
+			"BoidCount": {
+				"avg": 0.0,
+				"max": 0.0,
+				"min": 0.0
+			},
+			"CPU": {
+				"avg": 9.75,
+				"max": 9.75,
+				"min": 9.75
+			},
+			"Draws": {
+				"avg": 4.0,
+				"max": 4.0,
+				"min": 4.0
+			},
+			"FPS": {
+				"avg": 120.0,
+				"max": 120.0,
+				"min": 120.0
+			},
+			"RAM": {
+				"avg": 84.36,
+				"max": 84.36,
+				"min": 84.36
+			}
+		},
+		"timestamp": "2026-02-01T10:27:18"
 	}
 ]
