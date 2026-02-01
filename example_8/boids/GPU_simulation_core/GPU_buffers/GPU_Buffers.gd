@@ -1,6 +1,11 @@
 extends Node
 
 # ---------------------------------------------------------
+# Init flag
+# ---------------------------------------------------------
+var is_initialised = false
+
+# ---------------------------------------------------------
 # References
 # ---------------------------------------------------------
 var gpu_device : Node
@@ -27,6 +32,11 @@ var swarm_parameters : Array = []
 var swarm_count : int = 0
 var total_boids : int = 0
 
+# NEW: grid dimensions (set externally from GPU_SimulationCore)
+var grid_dim_x : int = 0
+var grid_dim_y : int = 0
+var grid_dim_z : int = 0
+
 # ---------------------------------------------------------
 # GPU buffers (SoA layout)
 # ---------------------------------------------------------
@@ -47,6 +57,10 @@ var sorted_boid_indices_buffer : RID
 
 var cell_id_buffer : RID
 var sorted_cell_id_buffer : RID
+
+# NEW: required for GridSort
+var cell_counts_buffer : RID
+var cell_offsets_buffer : RID
 
 # ---------------------------------------------------------
 # RDUniform descriptors (one per buffer)
@@ -69,66 +83,80 @@ var u_sorted_boid_index : RDUniform
 var u_cell_id : RDUniform
 var u_sorted_cell_id : RDUniform
 
+# NEW
+var u_cell_counts : RDUniform
+var u_cell_offsets : RDUniform
 
 func _ready() -> void:
 	gpu_device = get_node("../GPU_Device")
 	rd = gpu_device.rd
-	print("GPU_Buffers: ready")
-	
+	is_initialised = true
+	print("GPU_Buffers: initialised")
+
+
 # ---------------------------------------------------------
-# Set index buffers and cell_id buffers used for grid calculations and neighbour lookups
+# Build index + cell_id arrays on CPU
 # ---------------------------------------------------------
 func set_index_and_cell_ids() -> void:
 	if total_boids == 0:
-		push_error("set the position, velocity and swarm params first")
+		push_error("set the global params first")
 		return
-	
-	for i in range (total_boids):
+
+	print("total boids:", total_boids)
+	for i in range(total_boids):
 		boid_indices.append(i)
 		cell_ids.append(0)
 		sorted_boid_indices.append(0)
 		sorted_cell_ids.append(0)
 
 # ---------------------------------------------------------
-# Set per-boid data (positions, velocities) in SoA layout
+# Set positions (SoA)
 # ---------------------------------------------------------
-
 func set_positions_soa(pos_x : Array, pos_y : Array, pos_z : Array) -> void:
-	# Store CPU-side SoA arrays
 	initial_positions_x = pos_x
 	initial_positions_y = pos_y
 	initial_positions_z = pos_z
 
-
+# ---------------------------------------------------------
+# Set velocities (SoA)
+# ---------------------------------------------------------
 func set_velocities_soa(vel_x : Array, vel_y : Array, vel_z : Array) -> void:
-	# Store CPU-side SoA arrays
 	initial_velocities_x = vel_x
 	initial_velocities_y = vel_y
 	initial_velocities_z = vel_z
 
 # ---------------------------------------------------------
-# Set cell_size and per-swarm parameters 
+# Set grid + swarm params
 # ---------------------------------------------------------
-func set_params(cell_size : float, swarm_parameters_in : Array) -> void:
-	grid_cell_size = cell_size
-	swarm_count = swarm_parameters_in.size()
+func set_swarm_params(swarm_parameters_in : Array) -> void:
 	swarm_parameters = swarm_parameters_in
+	swarm_count = swarm_parameters_in.size()
 
-	# Count total boids
-	total_boids = 0
+	var total : int = 0
 	for p in swarm_parameters:
 		var count_value : int = int(p["count"])
-		total_boids = total_boids + count_value
+		total = total + count_value
 
-	print("GPU_Buffers: total boids =", total_boids)
+	print("GPU_Buffers: total boids =", total)
 	print("GPU_Buffers: swarms =", swarm_count)
+	
+	if total != get_parent().total_boids:
+		push_error("total count mismatch")
+		
+# ---------------------------------------------------------
+# Set global parameters which include total boid count, grid cell size, dim_x, dim_y, dim_z (from GPU_SimulationCore)
+# ---------------------------------------------------------
+func set_global_params(total_boid_count, grid_size, dim_x : int, dim_y : int, dim_z : int) -> void:
+	total_boids = total_boid_count
+	grid_cell_size = grid_size
+	grid_dim_x = dim_x
+	grid_dim_y = dim_y
+	grid_dim_z = dim_z
 
-
+# ---------------------------------------------------------
+# Validate inputs
+# ---------------------------------------------------------
 func _validate_inputs() -> void:
-	# ---------------------------------------------------------
-	# Ensure all SoA arrays exist and contain data
-	# If any of these are empty, the simulation cannot proceed.
-	# ---------------------------------------------------------
 	assert(not initial_positions_x.is_empty(), "positions_x not supplied")
 	assert(not initial_positions_y.is_empty(), "positions_y not supplied")
 	assert(not initial_positions_z.is_empty(), "positions_z not supplied")
@@ -137,10 +165,6 @@ func _validate_inputs() -> void:
 	assert(not initial_velocities_y.is_empty(), "velocities_y not supplied")
 	assert(not initial_velocities_z.is_empty(), "velocities_z not supplied")
 
-	# ---------------------------------------------------------
-	# Ensure each SoA component array matches total_boids.
-	# This guarantees that every boid has a valid x/y/z entry.
-	# ---------------------------------------------------------
 	assert(initial_positions_x.size() == total_boids, "positions_x length mismatch")
 	assert(initial_positions_y.size() == total_boids, "positions_y length mismatch")
 	assert(initial_positions_z.size() == total_boids, "positions_z length mismatch")
@@ -149,35 +173,19 @@ func _validate_inputs() -> void:
 	assert(initial_velocities_y.size() == total_boids, "velocities_y length mismatch")
 	assert(initial_velocities_z.size() == total_boids, "velocities_z length mismatch")
 
-	# ---------------------------------------------------------
-	# Internal consistency check:
-	# All position arrays must match each other,
-	# and all velocity arrays must match each other.
-	# This protects against partial uploads or corrupted state.
-	# ---------------------------------------------------------
 	assert(initial_positions_x.size() == initial_positions_y.size(), "position x/y mismatch")
 	assert(initial_positions_y.size() == initial_positions_z.size(), "position y/z mismatch")
 
 	assert(initial_velocities_x.size() == initial_velocities_y.size(), "velocity x/y mismatch")
 	assert(initial_velocities_y.size() == initial_velocities_z.size(), "velocity y/z mismatch")
 
-	# ---------------------------------------------------------
-	# Validate swarm parameters exist.
-	# These define per-swarm constants and are required for GPU setup.
-	# ---------------------------------------------------------
 	assert(not swarm_parameters.is_empty(), "swarm parameters not supplied")
-
-	# ---------------------------------------------------------
-	# Validate grid cell size.
-	# A zero or negative cell size would break grid assignment.
-	# ---------------------------------------------------------
 	assert(grid_cell_size > 0.0, "grid cell size invalid")
 
-
 # ---------------------------------------------------------
-# Build all buffers and uniform 
+# Build all GPU buffers
 # ---------------------------------------------------------
-func build_all_buffers():
+func build_all_buffers(grid_cell_count) -> void:
 	_validate_inputs()
 
 	_allocate_position_buffers()
@@ -186,22 +194,39 @@ func build_all_buffers():
 	_allocate_boid_to_swarm_buffer()
 	_allocate_global_params_buffer()
 	_allocate_boid_index_and_cell_id_buffers()
+	_allocate_cell_count_and_offset_buffers(grid_cell_count)
+
 	_build_uniform_descriptors()
 
 
 # ---------------------------------------------------------
-# Allocate position buffers (SoA: x, y, z)
+# Allocate velocity buffers
 # ---------------------------------------------------------
-func _allocate_position_buffers() -> void:
-	# Each component is a float (4 bytes)
+func _allocate_velocity_buffers() -> void:
 	var byte_count : int = total_boids * 4
 
-	# Create three separate SSBOs for x, y, z
+	velocities_x_buffer = rd.storage_buffer_create(byte_count)
+	velocities_y_buffer = rd.storage_buffer_create(byte_count)
+	velocities_z_buffer = rd.storage_buffer_create(byte_count)
+
+	var x_bytes : PackedByteArray = PackedFloat32Array(initial_velocities_x).to_byte_array()
+	var y_bytes : PackedByteArray = PackedFloat32Array(initial_velocities_y).to_byte_array()
+	var z_bytes : PackedByteArray = PackedFloat32Array(initial_velocities_z).to_byte_array()
+
+	rd.buffer_update(velocities_x_buffer, 0, x_bytes.size(), x_bytes)
+	rd.buffer_update(velocities_y_buffer, 0, y_bytes.size(), y_bytes)
+	rd.buffer_update(velocities_z_buffer, 0, z_bytes.size(), z_bytes)
+
+# ---------------------------------------------------------
+# Allocate position buffers
+# ---------------------------------------------------------
+func _allocate_position_buffers() -> void:
+	var byte_count : int = total_boids * 4
+
 	positions_x_buffer = rd.storage_buffer_create(byte_count)
 	positions_y_buffer = rd.storage_buffer_create(byte_count)
 	positions_z_buffer = rd.storage_buffer_create(byte_count)
 
-	# Upload CPU-side SoA arrays into GPU buffers
 	var x_bytes : PackedByteArray = PackedFloat32Array(initial_positions_x).to_byte_array()
 	var y_bytes : PackedByteArray = PackedFloat32Array(initial_positions_y).to_byte_array()
 	var z_bytes : PackedByteArray = PackedFloat32Array(initial_positions_z).to_byte_array()
@@ -210,30 +235,8 @@ func _allocate_position_buffers() -> void:
 	rd.buffer_update(positions_y_buffer, 0, y_bytes.size(), y_bytes)
 	rd.buffer_update(positions_z_buffer, 0, z_bytes.size(), z_bytes)
 
-
 # ---------------------------------------------------------
-# Allocate velocity buffers (SoA: x, y, z)
-# ---------------------------------------------------------
-func _allocate_velocity_buffers() -> void:
-	# Each component is a float (4 bytes)
-	var byte_count : int = total_boids * 4
-
-	# Create three separate SSBOs for x, y, z
-	velocities_x_buffer = rd.storage_buffer_create(byte_count)
-	velocities_y_buffer = rd.storage_buffer_create(byte_count)
-	velocities_z_buffer = rd.storage_buffer_create(byte_count)
-
-	# Upload CPU-side SoA arrays into GPU buffers
-	var x_bytes : PackedByteArray = PackedFloat32Array(initial_velocities_x).to_byte_array()
-	var y_bytes : PackedByteArray = PackedFloat32Array(initial_velocities_y).to_byte_array()
-	var z_bytes : PackedByteArray = PackedFloat32Array(initial_velocities_z).to_byte_array()
-
-	rd.buffer_update(velocities_x_buffer, 0, x_bytes.size(), x_bytes)
-	rd.buffer_update(velocities_y_buffer, 0, y_bytes.size(), y_bytes)
-	rd.buffer_update(velocities_z_buffer, 0, z_bytes.size(), z_bytes)
-	
-# ---------------------------------------------------------
-# Build SwarmParams buffer (one struct per swarm)
+# Allocate swarm params buffer (one struct per swarm)
 # ---------------------------------------------------------
 func _allocate_swarm_params_buffer() -> void:
 	var floats : PackedFloat32Array = PackedFloat32Array()
@@ -261,7 +264,7 @@ func _allocate_swarm_params_buffer() -> void:
 		floats.append(float(w["wander_strength"]))
 		floats.append(float(w["boundary_strength"]))
 
-		# Masks (explicit if/else, no ternary)
+		# Masks (explicit if/else)
 		var alignment_mask : float = 0.0
 		if m["alignment"] == true:
 			alignment_mask = 1.0
@@ -291,7 +294,6 @@ func _allocate_swarm_params_buffer() -> void:
 	swarm_params_buffer = rd.storage_buffer_create(byte_size)
 	rd.buffer_update(swarm_params_buffer, 0, byte_size, floats.to_byte_array())
 
-
 # ---------------------------------------------------------
 # Build boid_to_swarm buffer (length = total_boids)
 # ---------------------------------------------------------
@@ -305,34 +307,41 @@ func _allocate_boid_to_swarm_buffer() -> void:
 		var count_value : int = int(p["count"])
 
 		for i in range(start_index, start_index + count_value):
-			ints[i] = swarm_index + 1 # Want swarm to start at 1 not 0
+			ints[i] = swarm_index + 1  # swarms start at 1
 
 	var byte_size : int = ints.size() * 4
 	boid_to_swarm_buffer = rd.storage_buffer_create(byte_size)
 	rd.buffer_update(boid_to_swarm_buffer, 0, byte_size, ints.to_byte_array())
 
-
 # ---------------------------------------------------------
-# Global params buffer (currently only cell_size)
+# Global params buffer (cell_size + boid_count + grid dims)
 # ---------------------------------------------------------
 func _allocate_global_params_buffer() -> void:
-	var ints := PackedInt32Array()
-	ints.resize(4)  # std140: one 16-byte slot
-	ints[0] = int(grid_cell_size)
+	var bytes := PackedByteArray()
 
-	var byte_size := ints.size() * 4  # 16 bytes
+	# float cell_size
+	bytes.append_array(PackedFloat32Array([grid_cell_size]).to_byte_array())
+
+	# int boid_count
+	bytes.append_array(PackedInt32Array([total_boids]).to_byte_array())
+
+	# int grid_dim_x, grid_dim_y, grid_dim_z
+	bytes.append_array(PackedInt32Array([grid_dim_x]).to_byte_array())
+	bytes.append_array(PackedInt32Array([grid_dim_y]).to_byte_array())
+	bytes.append_array(PackedInt32Array([grid_dim_z]).to_byte_array())
+
+	# padding ints (pad0, pad1, pad2)
+	bytes.append_array(PackedInt32Array([0, 0, 0]).to_byte_array())
+
+	var byte_size := bytes.size()  # must be exactly 32
 	global_params_buffer = rd.uniform_buffer_create(byte_size)
-	rd.buffer_update(global_params_buffer, 0, byte_size, ints.to_byte_array())
+	rd.buffer_update(global_params_buffer, 0, byte_size, bytes)
 	
 	
 # ---------------------------------------------------------
-# Boid index and cell_id buffers used in calculating grids/neighbours
+# Allocate boid index + cell_id buffers
 # ---------------------------------------------------------
 func _allocate_boid_index_and_cell_id_buffers() -> void:
-	
-	if len(boid_indices) == 0 or len(cell_ids) == 0:
-		push_error("boid_index_array or cell_id_array have zero length")
-	
 	if boid_indices.size() != total_boids:
 		push_error("boid_index_array length mismatch")
 		return
@@ -340,43 +349,64 @@ func _allocate_boid_index_and_cell_id_buffers() -> void:
 	if cell_ids.size() != total_boids:
 		push_error("cell_id_array length mismatch")
 		return
-		
-	if len(boid_indices) != len(sorted_boid_indices) and len(cell_ids) != len(sorted_cell_ids):
-		push_error("array mismatch")
+
+	if sorted_boid_indices.size() != total_boids:
+		push_error("sorted_boid_indices length mismatch")
 		return
-	
+
+	if sorted_cell_ids.size() != total_boids:
+		push_error("sorted_cell_ids length mismatch")
+		return
+
 	var boid_indices_bytes : PackedByteArray = boid_indices.to_byte_array()
-	var bytes_size : int = boid_indices_bytes.size()  	#re use this variable since all these arrays are same size
-	boid_indices_buffer = rd.storage_buffer_create(bytes_size)
-	rd.buffer_update(boid_indices_buffer, 0, bytes_size, boid_indices_bytes)
+	var byte_size : int = boid_indices_bytes.size()
+
+	boid_indices_buffer = rd.storage_buffer_create(byte_size)
+	rd.buffer_update(boid_indices_buffer, 0, byte_size, boid_indices_bytes)
 
 	var sorted_indices_bytes : PackedByteArray = sorted_boid_indices.to_byte_array()
-	sorted_boid_indices_buffer = rd.storage_buffer_create(bytes_size)
-	rd.buffer_update(sorted_boid_indices_buffer, 0, bytes_size, sorted_indices_bytes)
+	sorted_boid_indices_buffer = rd.storage_buffer_create(byte_size)
+	rd.buffer_update(sorted_boid_indices_buffer, 0, byte_size, sorted_indices_bytes)
 
 	var cell_id_bytes : PackedByteArray = cell_ids.to_byte_array()
-	cell_id_buffer = rd.storage_buffer_create(bytes_size)
-	rd.buffer_update(cell_id_buffer, 0, bytes_size, cell_id_bytes)
+	cell_id_buffer = rd.storage_buffer_create(byte_size)
+	rd.buffer_update(cell_id_buffer, 0, byte_size, cell_id_bytes)
 
-	var sorted_cell_id_bytes : PackedByteArray = cell_ids.to_byte_array()
-	sorted_cell_id_buffer = rd.storage_buffer_create(bytes_size)
-	rd.buffer_update(sorted_cell_id_buffer, 0, bytes_size, sorted_cell_id_bytes)
+	var sorted_cell_id_bytes : PackedByteArray = sorted_cell_ids.to_byte_array()
+	sorted_cell_id_buffer = rd.storage_buffer_create(byte_size)
+	rd.buffer_update(sorted_cell_id_buffer, 0, byte_size, sorted_cell_id_bytes)
+
+# ---------------------------------------------------------
+# Allocate cell_counts + cell_offsets buffers
+# ---------------------------------------------------------
+func _allocate_cell_count_and_offset_buffers(grid_cell_count : int) -> void:
+
+	var cell_count = grid_cell_count
+	if cell_count <= 0:
+		push_error("grid_cell_count must be > 0 before building buffers")
+		return
+
+	var byte_size : int = cell_count * 4  # int32 per cell
+
+	# Counts (histogram)
+	cell_counts_buffer = rd.storage_buffer_create(byte_size)
+	var zero_counts := PackedInt32Array()
+	zero_counts.resize(cell_count)
+	rd.buffer_update(cell_counts_buffer, 0, byte_size, zero_counts.to_byte_array())
+
+	# Offsets (prefix sum)
+	cell_offsets_buffer = rd.storage_buffer_create(byte_size)
+	var zero_offsets := PackedInt32Array()
+	zero_offsets.resize(cell_count)
+	rd.buffer_update(cell_offsets_buffer, 0, byte_size, zero_offsets.to_byte_array())
 
 # ---------------------------------------------------------
 # Build RDUniform descriptors for all GPU buffers
 # ---------------------------------------------------------
-# Each descriptor:
-#   - is stored as a class variable
-#   - contains the correct binding index (global ABI)
-#   - references the GPU buffer RID
-#
-# Compute passes will pull these descriptors and assemble
-# their own uniform sets using the bindings defined here.
-# ---------------------------------------------------------
 func _build_uniform_descriptors() -> void:
 
 	# ---------------------------------------------------------
-	# Position buffers (SoA: x, y, z)
+	# Position buffers
 	# ---------------------------------------------------------
 	u_pos_x = RDUniform.new()
 	u_pos_x.binding = 0
@@ -393,9 +423,8 @@ func _build_uniform_descriptors() -> void:
 	u_pos_z.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_pos_z.add_id(positions_z_buffer)
 
-
 	# ---------------------------------------------------------
-	# Velocity buffers (SoA: x, y, z)
+	# Velocity buffers
 	# ---------------------------------------------------------
 	u_vel_x = RDUniform.new()
 	u_vel_x.binding = 3
@@ -412,9 +441,8 @@ func _build_uniform_descriptors() -> void:
 	u_vel_z.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_vel_z.add_id(velocities_z_buffer)
 
-
 	# ---------------------------------------------------------
-	# Swarm + global parameters
+	# Swarm + global params
 	# ---------------------------------------------------------
 	u_swarm = RDUniform.new()
 	u_swarm.binding = 6
@@ -430,7 +458,6 @@ func _build_uniform_descriptors() -> void:
 	u_global.binding = 8
 	u_global.uniform_type = RenderingDevice.UNIFORM_TYPE_UNIFORM_BUFFER
 	u_global.add_id(global_params_buffer)
-
 
 	# ---------------------------------------------------------
 	# Grid + sorted grid buffers
@@ -454,3 +481,16 @@ func _build_uniform_descriptors() -> void:
 	u_sorted_cell_id.binding = 12
 	u_sorted_cell_id.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_sorted_cell_id.add_id(sorted_cell_id_buffer)
+
+	# ---------------------------------------------------------
+	# NEW: cell_counts + cell_offsets
+	# ---------------------------------------------------------
+	u_cell_counts = RDUniform.new()
+	u_cell_counts.binding = 13
+	u_cell_counts.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	u_cell_counts.add_id(cell_counts_buffer)
+
+	u_cell_offsets = RDUniform.new()
+	u_cell_offsets.binding = 14
+	u_cell_offsets.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	u_cell_offsets.add_id(cell_offsets_buffer)

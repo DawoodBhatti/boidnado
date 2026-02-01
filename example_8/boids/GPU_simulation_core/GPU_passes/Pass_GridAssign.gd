@@ -8,7 +8,7 @@ var uniform_set_rid : RID
 
 var _initialised := false
 
-var debug := false
+var debug := true
 
 func _ready() -> void:
 	gpu_device = get_node("../../GPU_Device")
@@ -18,8 +18,13 @@ func _ready() -> void:
 
 
 func _init_pass(rd: RenderingDevice) -> void:
+
 	if debug:
 		print("\n[GridAssign] --- INIT PASS ---")
+
+	# Strong asserts: GPU_Device must be fully initialised
+	assert(gpu_device.grid_assign_rid.is_valid())
+	assert(gpu_device.grid_assign_pipeline.is_valid())
 
 	# Pull RDUniform descriptors
 	var u_pos_x : RDUniform = gpu_buffers.u_pos_x
@@ -35,6 +40,13 @@ func _init_pass(rd: RenderingDevice) -> void:
 		print("[GridAssign] u_pos_z:", u_pos_z)
 		print("[GridAssign] u_global:", u_global)
 		print("[GridAssign] u_cell_id:", u_cell_id)
+		
+		# Print binding ids
+		print("u_pos_x.binding =", u_pos_x.binding)
+		print("u_pos_y.binding =", u_pos_y.binding)
+		print("u_pos_z.binding =", u_pos_z.binding)
+		print("u_global.binding =", u_global.binding)
+		print("u_cell_id.binding =", u_cell_id.binding)
 
 		# Print buffer RIDs inside descriptors
 		print("[GridAssign] pos_x buffer RID:", gpu_buffers.positions_x_buffer)

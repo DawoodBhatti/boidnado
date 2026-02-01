@@ -36,12 +36,18 @@ var total_boids : int = 0
 var workgroup_count : int = 0
 var local_group_size : int = 64
 
+# Grid / world dimensions (derived from cage radius + cell size)
+var grid_dim_x : int = 0
+var grid_dim_y : int = 0
+var grid_dim_z : int = 0
+var grid_cell_count : int = 0
+
 
 # ---------------------------------------------------------
 # Child nodes (GPU subsystems)
 # ---------------------------------------------------------
-var device : Node              # GPU_Device (RenderingDevice + pipelines)
-var buffers : Node             # GPU_Buffers (storage buffers + RDUniform descriptors)
+var gpu_device : Node              # GPU_Device (RenderingDevice + pipelines)
+var gpu_buffers : Node             # GPU_Buffers (storage buffers + RDUniform descriptors)
 var pass_grid_assign : Node
 var pass_grid_sort : Node
 var pass_grid_mapping : Node
@@ -57,21 +63,24 @@ func _ready() -> void:
 	# ---------------------------------------------------------
 	# Cache subsystem references
 	# ---------------------------------------------------------
-	device  = get_node("GPU_Device")
-	buffers = get_node("GPU_Buffers")
+	gpu_device = get_node("GPU_Device")
+	gpu_buffers = get_node("GPU_Buffers")
 	pass_debug = get_node("GPU_Debug")
-
-	rd = device.rd
+	
+	# Wait until GPU_Device and GPU_Buffers report ready
+	await _wait_for_gpu_backend()
+	
+	rd = gpu_device.rd
 
 	# All compute passes live under GPU_Passes
-	var passes = get_node("GPU_Passes")
+	var passes : Node = get_node("GPU_Passes")
 
-	pass_test         = passes.get_node("Pass_TestPass")
-	pass_grid_assign  = passes.get_node("Pass_GridAssign")
-	pass_grid_sort    = passes.get_node("Pass_GridSort")
+	pass_test = passes.get_node("Pass_TestPass")
+	pass_grid_assign = passes.get_node("Pass_GridAssign")
+	pass_grid_sort = passes.get_node("Pass_GridSort")
 	pass_grid_mapping = passes.get_node("Pass_GridMapping")
-	pass_behaviour    = passes.get_node("Pass_Behaviour")
-	pass_integration  = passes.get_node("Pass_Integration")
+	pass_behaviour = passes.get_node("Pass_Behaviour")
+	pass_integration = passes.get_node("Pass_Integration")
 
 	# NOTE:
 	# Other systems (Renderer, Debug tools) should access GPU buffers
@@ -81,28 +90,56 @@ func _ready() -> void:
 	# This ensures a single source of truth for GPU data.
 
 
+
+# ---------------------------------------------------------
+# Helper: wait until GPU Buffers and Device fully initialised
+# ---------------------------------------------------------
+func _wait_for_gpu_backend() -> void:
+	# Simple polling loop; usually resolves in 1 frame
+	while not gpu_device.is_initialised or not gpu_buffers.is_initialised:
+		await get_tree().process_frame
+
+	# Optional: strong asserts once the loop exits
+	assert(gpu_device.rd != null)
+
+# ---------------------------------------------------------
+# Helper: compute grid dimensions from cage radius
+# ---------------------------------------------------------
+func get_grid_dimensions(grid_cell_size : float, swarm_params : Array) -> Dictionary:
+	var max_cage_radius : float = 0.0
+
+	for p in swarm_params:
+		var r : float = float(p["constants"]["cage_radius"])
+		if r > max_cage_radius:
+			max_cage_radius = r
+
+	var grid_extent : float = max_cage_radius * 2.0
+
+	var dim_x : int = int(floor(grid_extent / grid_cell_size))
+	var dim_y : int = int(floor(grid_extent / grid_cell_size))
+	var dim_z : int = int(floor(grid_extent / grid_cell_size))
+
+	var cell_count : int = dim_x * dim_y * dim_z
+
+	var result : Dictionary = {
+		"dim_x": dim_x,
+		"dim_y": dim_y,
+		"dim_z": dim_z,
+		"cell_count": cell_count
+	}
+	return result
+
+
 # ---------------------------------------------------------
 # INITIALISATION ENTRY POINT
 # ---------------------------------------------------------
 func initialise_simulation(grid_cell_size : float, swarm_params : Array) -> void:
-	"""
-	Called once by SwarmManager after all configs are loaded.
-
-	This function:
-	  - Computes total boid count
-	  - Generates initial positions + velocities (CPU-side)
-	  - Uploads them to GPU_Buffers
-	  - Uploads per-swarm constants
-	  - Allocates grid + index buffers
-	  - Builds all GPU-side storage buffers
-	"""
-
 	# Compute total boid count
 	total_boids = 0
 	for p in swarm_params:
 		total_boids += p["count"]
 
-	# Compute number of workgroups for compute dispatch
+	# Compute number of workgroups
 	workgroup_count = ceil(total_boids / float(local_group_size))
 
 	# ---------------------------------------------------------
@@ -130,21 +167,34 @@ func initialise_simulation(grid_cell_size : float, swarm_params : Array) -> void
 		pos_y[i] = -5 + randf() * 10.0
 		pos_z[i] = -5 + randf() * 10.0
 
-		vel_x[i] = 0.5 + randf() 
-		vel_y[i] = 0.5 + randf() 
-		vel_z[i] = 0.5 + randf() 
+		vel_x[i] = -0.5 + randf()
+		vel_y[i] = -0.5 + randf()
+		vel_z[i] = -0.5 + randf()
+
+	# ---------------------------------------------------------
+	# Compute grid dimensions from cage radius
+	# ---------------------------------------------------------
+	var grid_info : Dictionary = get_grid_dimensions(grid_cell_size, swarm_params)
+
+	grid_dim_x = grid_info["dim_x"]
+	grid_dim_y = grid_info["dim_y"]
+	grid_dim_z = grid_info["dim_z"]
+	grid_cell_count = grid_info["cell_count"]
+
+	print("Grid dims: ", grid_dim_x, " x ", grid_dim_y, " x ", grid_dim_z)
+	print("Grid cell count: ", grid_cell_count)
 
 	# ---------------------------------------------------------
 	# Upload CPU-side data to GPU_Buffers
 	# ---------------------------------------------------------
-	buffers.set_positions_soa(pos_x, pos_y, pos_z)
-	buffers.set_velocities_soa(vel_x, vel_y, vel_z)
-
-	buffers.set_params(grid_cell_size, swarm_params)
-	buffers.set_index_and_cell_ids()
+	gpu_buffers.set_positions_soa(pos_x, pos_y, pos_z)
+	gpu_buffers.set_velocities_soa(vel_x, vel_y, vel_z)
+	gpu_buffers.set_swarm_params(swarm_params)
+	gpu_buffers.set_global_params(total_boids, grid_cell_size, grid_dim_x, grid_dim_y, grid_dim_z)
+	gpu_buffers.set_index_and_cell_ids()
 
 	# Allocate and upload all GPU buffers
-	buffers.build_all_buffers()
+	gpu_buffers.build_all_buffers(grid_cell_count)
 
 	print("GPU_SimulationCore: initialised ", total_boids,
 		  " boids with grid_cell_size ", grid_cell_size)
@@ -162,9 +212,7 @@ func simulate(delta : float) -> void:
 	Other systems (Renderer, Debug tools) can read these buffers on demand.
 	"""
 
-	#print("GPU_SimulationCore: simulate() with workgroups = ", workgroup_count)
-
-	var compute_list = rd.compute_list_begin()
+	var compute_list : int = rd.compute_list_begin()
 
 	# ---------------------------------------------------------
 	# Execute compute passes in order
@@ -172,10 +220,33 @@ func simulate(delta : float) -> void:
 	# ---------------------------------------------------------
 	#pass_test.run(rd, compute_list, workgroup_count)
 	pass_grid_assign.run(rd, compute_list, workgroup_count)
-	#pass_grid_sort.run(rd, compute_list, workgroup_count)
+
+	# GridSort needs:
+	#   - workgroups over boids
+	#   - workgroups over cells
+	var workgroups_cells : int = ceil(grid_cell_count / float(local_group_size))
+	pass_grid_sort.run(rd, compute_list, workgroup_count, workgroups_cells)
+
 	#pass_grid_mapping.run(rd, compute_list, workgroup_count)
 	#pass_behaviour.run(rd, compute_list, workgroup_count)
 	#pass_integration.run(rd, compute_list, workgroup_count)
+
+	# ---------------------------------------------------------
+	# DEBUG: Workgroup diagnostics
+	# ---------------------------------------------------------
+	print("\n--- GPU Dispatch Debug ---")
+
+	print("Boid count:          ", total_boids)
+	print("Grid cell count:     ", grid_cell_count)
+	print("Local group size:    ", local_group_size)
+
+	print("Workgroups (boids):  ", workgroup_count,
+		  "   (", workgroup_count * local_group_size, " threads launched )")
+
+	print("Workgroups (cells):  ", workgroups_cells,
+		  "   (", workgroups_cells * local_group_size, " threads launched )")
+
+	print("---------------------------\n")
 
 	# ---------------------------------------------------------
 	# Submit GPU work
@@ -183,15 +254,13 @@ func simulate(delta : float) -> void:
 	rd.compute_list_end()
 	rd.submit()
 
-	# Sync if CPU needs readback (debug, renderer) 
+	# Sync if CPU needs readback (debug, renderer)
 	# Keep this in temporarily while we are building the pipeline but eventually:
 	# 	Future Improvement 1 — Fence-based scheduling (Vulkan-style)
 	#	Future Improvement 2 — Double-buffered GPU job
 	#	Future Improvement 4 — GPU job queue
-	
-	
-	rd.sync()
 
+	rd.sync()
 
 	# Optional debug readback
 	pass_debug.run()

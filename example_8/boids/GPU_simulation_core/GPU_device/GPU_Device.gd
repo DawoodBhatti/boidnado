@@ -20,6 +20,11 @@ focused purely on GPU program creation and lifetime management.
 """
 
 # ---------------------------------------------------------
+# Init flag
+# ---------------------------------------------------------
+var is_initialised = false
+
+# ---------------------------------------------------------
 # RenderingDevice (Vulkan-like GPU context)
 # ---------------------------------------------------------
 var rd : RenderingDevice
@@ -28,9 +33,11 @@ var rd : RenderingDevice
 # ---------------------------------------------------------
 # Shader resources (GLSL → SPIR-V)
 # ---------------------------------------------------------
-var test_compute : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/test_compute.glsl")
-var grid_assign  : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_assign.glsl")
-#var grid_sort    : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort.glsl")
+var test_compute            : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/test_compute.glsl")
+var grid_assign             : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_assign.glsl")
+var grid_sort_histogram    : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort_histogram.glsl")
+var grid_sort_prefix        : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort_prefix.glsl")
+var grid_sort_scatter       : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort_scatter.glsl")
 #var grid_mapping : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_mapping.glsl")
 #var behaviour    : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/behaviour.glsl")
 #var integration  : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/integration.glsl")
@@ -41,7 +48,9 @@ var grid_assign  : Resource      = load("res://example_8/boids/GPU_simulation_co
 # ---------------------------------------------------------
 var test_compute_shader_rid
 var grid_assign_rid
-var grid_sort_rid
+var grid_sort_histogram_rid
+var grid_sort_prefix_rid
+var grid_sort_scatter_rid
 var grid_mapping_rid
 var behaviour_rid
 var integration_rid
@@ -52,7 +61,9 @@ var integration_rid
 # ---------------------------------------------------------
 var test_compute_pipeline
 var grid_assign_pipeline
-var grid_sort_pipeline
+var grid_sort_histogram_pipeline
+var grid_sort_prefix_pipeline
+var grid_sort_scatter_pipeline
 var grid_mapping_pipeline
 var behaviour_pipeline
 var integration_pipeline
@@ -70,12 +81,18 @@ func _ready() -> void:
 	# ---------------------------------------------------------
 	_load_shaders()
 	print("GPU_Device: shaders loaded")
+	print("GPU_Device: grid_assign_rid:", grid_assign_rid)
 
 	# ---------------------------------------------------------
 	# Create compute pipelines for each shader
 	# ---------------------------------------------------------
 	_create_compute_pipelines()
 	print("GPU_Device: compute pipelines created")
+	print("GPU_Device: grid_assign_pipeline:", grid_assign_pipeline)
+
+	is_initialised = true
+	print("GPU_Device: initialised =", is_initialised)
+
 
 
 # ---------------------------------------------------------
@@ -92,8 +109,14 @@ func _load_shaders() -> void:
 	grid_assign_rid = rd.shader_create_from_spirv(assign_spirv)
 
 	# Grid Sort
-	#var sort_spirv = grid_sort.get_spirv()
-	#grid_sort_rid = rd.shader_create_from_spirv(sort_spirv)
+	var sort_histogram_spirv = grid_sort_histogram.get_spirv()
+	var sort_prefix_spirv = grid_sort_prefix.get_spirv()
+	var sort_scatter_spirv = grid_sort_scatter.get_spirv()
+
+	grid_sort_histogram_rid = rd.shader_create_from_spirv(sort_histogram_spirv)
+	grid_sort_prefix_rid = rd.shader_create_from_spirv(sort_prefix_spirv)
+	grid_sort_scatter_rid = rd.shader_create_from_spirv(sort_scatter_spirv)
+
 
 	# Grid Mapping
 	#var mapping_spirv = grid_mapping.get_spirv()
@@ -120,8 +143,17 @@ func _create_compute_pipelines() -> void:
 	grid_assign_pipeline = rd.compute_pipeline_create(grid_assign_rid)
 
 	# Grid Sort
-	#grid_sort_pipeline = rd.compute_pipeline_create(grid_sort_rid)
-
+	grid_sort_histogram_pipeline = rd.compute_pipeline_create(grid_sort_histogram_rid)
+	grid_sort_prefix_pipeline = rd.compute_pipeline_create(grid_sort_prefix_rid)
+	grid_sort_scatter_pipeline = rd.compute_pipeline_create(grid_sort_scatter_rid)
+	
+	
+	assert(test_compute_pipeline.is_valid())
+	assert(grid_assign_pipeline.is_valid())
+	assert(grid_sort_histogram_pipeline.is_valid())
+	assert(grid_sort_prefix_pipeline.is_valid())
+	assert(grid_sort_scatter_pipeline.is_valid())
+	
 	# Grid Mapping
 	#grid_mapping_pipeline = rd.compute_pipeline_create(grid_mapping_rid)
 

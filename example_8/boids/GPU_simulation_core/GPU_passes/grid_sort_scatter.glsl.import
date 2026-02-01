@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://vdteils4tebf"
+path="res://.godot/imported/grid_sort_scatter.glsl-148ccdc13ad9e577793f2a2e49ba5c83.res"
+
+[deps]
+
+source_file="res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort_scatter.glsl"
+dest_files=["res://.godot/imported/grid_sort_scatter.glsl-148ccdc13ad9e577793f2a2e49ba5c83.res"]
+
+[params]
+
