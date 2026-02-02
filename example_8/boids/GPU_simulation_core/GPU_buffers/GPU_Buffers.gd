@@ -58,9 +58,9 @@ var sorted_boid_indices_buffer : RID
 var cell_id_buffer : RID
 var sorted_cell_id_buffer : RID
 
-# NEW: required for GridSort
 var cell_counts_buffer : RID
 var cell_offsets_buffer : RID
+var cell_mapping_buffer : RID
 
 # ---------------------------------------------------------
 # RDUniform descriptors (one per buffer)
@@ -86,6 +86,8 @@ var u_sorted_cell_id : RDUniform
 # NEW
 var u_cell_counts : RDUniform
 var u_cell_offsets : RDUniform
+var u_cell_mapping : RDUniform
+
 
 func _ready() -> void:
 	gpu_device = get_node("../GPU_Device")
@@ -102,7 +104,6 @@ func set_index_and_cell_ids() -> void:
 		push_error("set the global params first")
 		return
 
-	print("total boids:", total_boids)
 	for i in range(total_boids):
 		boid_indices.append(i)
 		cell_ids.append(0)
@@ -136,9 +137,6 @@ func set_swarm_params(swarm_parameters_in : Array) -> void:
 	for p in swarm_parameters:
 		var count_value : int = int(p["count"])
 		total = total + count_value
-
-	print("GPU_Buffers: total boids =", total)
-	print("GPU_Buffers: swarms =", swarm_count)
 	
 	if total != get_parent().total_boids:
 		push_error("total count mismatch")
@@ -194,7 +192,7 @@ func build_all_buffers(grid_cell_count) -> void:
 	_allocate_boid_to_swarm_buffer()
 	_allocate_global_params_buffer()
 	_allocate_boid_index_and_cell_id_buffers()
-	_allocate_cell_count_and_offset_buffers(grid_cell_count)
+	_allocate_sorting_buffers(grid_cell_count)
 
 	_build_uniform_descriptors()
 
@@ -377,9 +375,10 @@ func _allocate_boid_index_and_cell_id_buffers() -> void:
 	rd.buffer_update(sorted_cell_id_buffer, 0, byte_size, sorted_cell_id_bytes)
 
 # ---------------------------------------------------------
-# Allocate cell_counts + cell_offsets buffers
+# Allocate cell_counts, cell_offsets buffers and cell_mapping
+# used in the grid sorting and grid mapping pass
 # ---------------------------------------------------------
-func _allocate_cell_count_and_offset_buffers(grid_cell_count : int) -> void:
+func _allocate_sorting_buffers(grid_cell_count : int) -> void:
 
 	var cell_count = grid_cell_count
 	if cell_count <= 0:
@@ -399,6 +398,13 @@ func _allocate_cell_count_and_offset_buffers(grid_cell_count : int) -> void:
 	var zero_offsets := PackedInt32Array()
 	zero_offsets.resize(cell_count)
 	rd.buffer_update(cell_offsets_buffer, 0, byte_size, zero_offsets.to_byte_array())
+
+	# Cell mapping (ivec2 per cell → 8 bytes per cell)
+	var mapping_byte_size : int = cell_count * 2 * 4  # 2 ints per cell
+	cell_mapping_buffer = rd.storage_buffer_create(mapping_byte_size)
+	var zero_vec := PackedInt32Array()
+	zero_vec.resize(cell_count * 2)  # two ints per cell
+	rd.buffer_update(cell_mapping_buffer, 0, mapping_byte_size, zero_vec.to_byte_array())
 
 # ---------------------------------------------------------
 # Build RDUniform descriptors for all GPU buffers
@@ -483,7 +489,7 @@ func _build_uniform_descriptors() -> void:
 	u_sorted_cell_id.add_id(sorted_cell_id_buffer)
 
 	# ---------------------------------------------------------
-	# NEW: cell_counts + cell_offsets
+	# cell_counts, cell_offsets and cell_mapping
 	# ---------------------------------------------------------
 	u_cell_counts = RDUniform.new()
 	u_cell_counts.binding = 13
@@ -494,3 +500,8 @@ func _build_uniform_descriptors() -> void:
 	u_cell_offsets.binding = 14
 	u_cell_offsets.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_cell_offsets.add_id(cell_offsets_buffer)
+
+	u_cell_mapping = RDUniform.new()
+	u_cell_mapping.binding = 15
+	u_cell_mapping.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	u_cell_mapping.add_id(cell_mapping_buffer)

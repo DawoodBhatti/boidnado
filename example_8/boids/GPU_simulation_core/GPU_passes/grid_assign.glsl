@@ -19,6 +19,7 @@ layout(set = 0, binding = 2) buffer zPosBuffer {
 };
 
 // Binding 8 - global grid params
+// Matches CPU-side packing:
 //   float cell_size;
 //   int   boid_count;
 //   int   grid_dim_x;
@@ -78,7 +79,7 @@ void main() {
         return;
     }
 
-    // 3D → 1D cell index
+    // 3D → 1D cell index hash
     int cell = gx
              + gy * params.grid_dim_x
              + gz * (params.grid_dim_x * params.grid_dim_y);

@@ -13,7 +13,7 @@ layout(set = 0, binding = 13) buffer CellCountsBuffer {
 };
 
 // Binding 8 - global grid params
-// Matches your CPU-side packing:
+// Matches CPU-side packing:
 //   float cell_size;
 //   int   boid_count;
 //   int   grid_dim_x;
@@ -36,12 +36,14 @@ layout(set = 0, binding = 8) uniform GlobalParams {
 void main() {
     uint idx = gl_GlobalInvocationID.x;
 
+    // Only real boids participate
     if (idx >= uint(params.boid_count)) {
         return;
     }
 
     int cell = cell_ids[idx];
-
+	
+    // Ignore invalid cells
     if (cell < 0) {
         return;
     }
@@ -52,5 +54,6 @@ void main() {
         return;
     }
 
+	// Parallel-safe addition method which avoids race conditions from things like cell_counts[cell] += 1 called by multiple invocations simultaneously
     atomicAdd(cell_counts[cell], 1);
 }

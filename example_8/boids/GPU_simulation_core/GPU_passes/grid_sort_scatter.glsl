@@ -67,6 +67,7 @@ void main() {
 
     int max_cells = params.grid_dim_x * params.grid_dim_y * params.grid_dim_z;
 
+	// Ignore cells outside of defined bounds
     if (cell >= max_cells) {
         return;
     }

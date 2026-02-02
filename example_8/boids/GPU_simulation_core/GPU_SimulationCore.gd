@@ -227,7 +227,7 @@ func simulate(delta : float) -> void:
 	var workgroups_cells : int = ceil(grid_cell_count / float(local_group_size))
 	pass_grid_sort.run(rd, compute_list, workgroup_count, workgroups_cells)
 
-	#pass_grid_mapping.run(rd, compute_list, workgroup_count)
+	pass_grid_mapping.run(rd, compute_list, workgroup_count)
 	#pass_behaviour.run(rd, compute_list, workgroup_count)
 	#pass_integration.run(rd, compute_list, workgroup_count)
 

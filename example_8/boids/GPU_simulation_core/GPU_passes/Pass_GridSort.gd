@@ -4,7 +4,7 @@ extends Node
 Pass_GridSort.gd
 ----------------
 
-This compute pass performs a full GPU counting-sort of boids by cell_id.
+This compute pass consists of 3 sub passes where it performs a full GPU counting-sort of boids by cell_id.
 
 Pipeline:
     1. Histogram  (cell_ids → cell_counts)

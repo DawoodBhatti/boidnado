@@ -40,6 +40,7 @@ var sorted_cell_ids : PackedInt32Array
 
 var cell_counts : PackedInt32Array
 var cell_offsets : PackedInt32Array
+var cell_mappings: PackedInt32Array
 
 
 func _ready() -> void:
@@ -58,12 +59,12 @@ func run() -> void:
 	_read_boid_indices()
 	_read_cell_ids()
 	_read_cell_counts_and_offsets()
+	_read_cell_mappings()
+
 
 	if debug_print_enabled:
 		_print_all()
 
-
-		
 
 
 # ---------------------------------------------------------
@@ -147,6 +148,10 @@ func _read_cell_counts_and_offsets() -> void:
 	cell_offsets = offsets_bytes.to_int32_array()
 
 
+func _read_cell_mappings() -> void:
+	var mapping_bytes : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.cell_mapping_buffer)
+	cell_mappings = mapping_bytes.to_int32_array()
+	
 # ---------------------------------------------------------
 # PRINT HELPERS (only run if debug_print_enabled)
 # ---------------------------------------------------------
@@ -158,10 +163,11 @@ func _print_all() -> void:
 	#_print_velocities()
 	#_print_swarm_params()
 	#_print_boid_to_swarm()
-	_print_global_params()
-	_print_boid_indices()
-	_print_cell_ids()
-	_print_cell_counts_and_offsets()
+	#_print_global_params()
+	#_print_boid_indices()
+	#_print_cell_ids()
+	#_print_cell_counts_and_offsets()
+	_print_cell_mappings()
 
 
 func _print_positions() -> void:
@@ -255,3 +261,33 @@ func _print_cell_counts_and_offsets() -> void:
 	var limit_offsets : int = min(32, cell_offsets.size())
 	for i in range(limit_offsets):
 		print("  cell_offsets[", i, "] = ", cell_offsets[i])
+
+func _print_cell_mappings() -> void:
+	print("\n[Cell Mappings Buffer] (", cell_mappings.size() / 2, " cells)")
+
+	var cell_count : int = cell_mappings.size() / 2
+	var limit : int = 32
+	if cell_count < limit:
+		limit = cell_count
+
+	for i in range(limit):
+		var start : int = cell_mappings[i * 2 + 0]
+		var end   : int = cell_mappings[i * 2 + 1]
+		var length : int = end - start
+
+		var count_from_counts : int = -1
+		if i < cell_counts.size():
+			count_from_counts = cell_counts[i]
+
+		var offset_from_offsets : int = -1
+		if i < cell_offsets.size():
+			offset_from_offsets = cell_offsets[i]
+
+		print(
+			"  cell[", i, "]  ",
+			"start=", start,
+			", end=", end,
+			", len=", length,
+			"   | counts[i]=", count_from_counts,
+			", offsets[i]=", offset_from_offsets
+		)
