@@ -20,6 +20,8 @@ func _ready() -> void:
 func _init_pass(rd: RenderingDevice) -> void:
 
 	if debug:
+		#TODO seeing a strange bug where the grid assign fires before we have completed this init pass
+		#can come back to it soon.
 		print("\n[GridAssign] --- INIT PASS ---")
 
 	# Strong asserts: GPU_Device must be fully initialised

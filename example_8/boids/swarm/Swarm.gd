@@ -8,7 +8,7 @@ Represents a single swarm configuration in the scene.
 Responsibilities:
  - Holds CPU‑side metadata for this swarm (mesh, colour, boid count)
  - Defines the boid index range assigned to this swarm (start_index → start_index + count)
- - Provides references to child systems (Renderer, Cage, VisualDebug)
+ - Provides references to child systems (Cage, VisualDebug)
  - Wires its children so they know which swarm they belong to
  - Forwards per‑frame update calls to Renderer and VisualDebug
 
@@ -30,7 +30,6 @@ var mesh : ArrayMesh       # Mesh used for this swarm
 
 
 func _ready():
-	renderer = get_node("Renderer")
 	cage = get_node("Cage")
 	debug = get_node("VisualDebug")
 

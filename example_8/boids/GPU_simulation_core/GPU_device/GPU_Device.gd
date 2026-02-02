@@ -9,7 +9,7 @@ It owns:
   - all compute pipelines (one per shader)
 
 It does NOT:
-  - manage buffers
+  - manage buffers or textures
   - build uniform sets
   - run compute passes
   - know anything about simulation logic
@@ -29,7 +29,6 @@ var is_initialised = false
 # ---------------------------------------------------------
 var rd : RenderingDevice
 
-
 # ---------------------------------------------------------
 # Shader resources (GLSL → SPIR-V)
 # ---------------------------------------------------------
@@ -39,9 +38,9 @@ var grid_sort_histogram     : Resource      = load("res://example_8/boids/GPU_si
 var grid_sort_prefix        : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort_prefix.glsl")
 var grid_sort_scatter       : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort_scatter.glsl")
 var grid_mapping            : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_mapping.glsl")
-#var behaviour    : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/behaviour.glsl")
+var behaviour               : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/behaviour.glsl")
+var density_3D              : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/density_3D.glsl")
 #var integration  : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/integration.glsl")
-
 
 # ---------------------------------------------------------
 # Shader RIDs (GPU-side shader handles)
@@ -53,7 +52,8 @@ var grid_sort_prefix_rid
 var grid_sort_scatter_rid
 var grid_mapping_rid
 var behaviour_rid
-var integration_rid
+var density_3D_rid
+#var integration_rid
 
 
 # ---------------------------------------------------------
@@ -66,7 +66,8 @@ var grid_sort_prefix_pipeline
 var grid_sort_scatter_pipeline
 var grid_mapping_pipeline
 var behaviour_pipeline
-var integration_pipeline
+var density_3D_pipeline
+#var integration_pipeline
 
 
 func _ready() -> void:
@@ -92,7 +93,6 @@ func _ready() -> void:
 	print("GPU_Device: initialised =", is_initialised)
 
 
-
 # ---------------------------------------------------------
 # Load SPIR-V and create shader RIDs
 # ---------------------------------------------------------
@@ -115,14 +115,17 @@ func _load_shaders() -> void:
 	grid_sort_prefix_rid = rd.shader_create_from_spirv(sort_prefix_spirv)
 	grid_sort_scatter_rid = rd.shader_create_from_spirv(sort_scatter_spirv)
 
-
 	# Grid Mapping
 	var mapping_spirv = grid_mapping.get_spirv()
 	grid_mapping_rid = rd.shader_create_from_spirv(mapping_spirv)
 
 	# Behaviour
-	#var behaviour_spirv = behaviour.get_spirv()
-	#behaviour_rid = rd.shader_create_from_spirv(behaviour_spirv)
+	var behaviour_spirv = behaviour.get_spirv()
+	behaviour_rid = rd.shader_create_from_spirv(behaviour_spirv)
+
+	# Density
+	var density_3d_spriv = density_3D.get_spirv()
+	density_3D_rid = rd.shader_create_from_spirv(density_3d_spriv)
 
 	# Integration
 	#var integration_spirv = integration.get_spirv()
@@ -148,6 +151,13 @@ func _create_compute_pipelines() -> void:
 	# Grid Mapping
 	grid_mapping_pipeline = rd.compute_pipeline_create(grid_mapping_rid)
 
+	# Behaviour
+	behaviour_pipeline = rd.compute_pipeline_create(behaviour_rid)
+	
+	# Density 3d
+	density_3D_pipeline = rd.compute_pipeline_create(density_3D_rid)
+
+
 	# test before proceeding
 	assert(test_compute_pipeline.is_valid())
 	assert(grid_assign_pipeline.is_valid())
@@ -155,9 +165,9 @@ func _create_compute_pipelines() -> void:
 	assert(grid_sort_prefix_pipeline.is_valid())
 	assert(grid_sort_scatter_pipeline.is_valid())
 	assert(grid_mapping_pipeline.is_valid())
+	assert(behaviour_pipeline.is_valid())
+	assert(density_3D_pipeline.is_valid())
 
-	# Behaviour
-	#behaviour_pipeline = rd.compute_pipeline_create(behaviour_rid)
 
 	# Integration
 	#integration_pipeline = rd.compute_pipeline_create(integration_rid)

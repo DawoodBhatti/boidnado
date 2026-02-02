@@ -37,8 +37,9 @@ var grid_dim_x : int = 0
 var grid_dim_y : int = 0
 var grid_dim_z : int = 0
 
+
 # ---------------------------------------------------------
-# GPU buffers (SoA layout)
+# GPU buffers (SoA layout) + density texture
 # ---------------------------------------------------------
 var positions_x_buffer : RID
 var positions_y_buffer : RID
@@ -62,8 +63,10 @@ var cell_counts_buffer : RID
 var cell_offsets_buffer : RID
 var cell_mapping_buffer : RID
 
+var density_texture_3D : RID
+
 # ---------------------------------------------------------
-# RDUniform descriptors (one per buffer)
+# RDUniform descriptors (one per buffer/texture)
 # ---------------------------------------------------------
 var u_pos_x : RDUniform
 var u_pos_y : RDUniform
@@ -83,11 +86,11 @@ var u_sorted_boid_index : RDUniform
 var u_cell_id : RDUniform
 var u_sorted_cell_id : RDUniform
 
-# NEW
 var u_cell_counts : RDUniform
 var u_cell_offsets : RDUniform
 var u_cell_mapping : RDUniform
 
+var u_density_image_3D : RDUniform  
 
 func _ready() -> void:
 	gpu_device = get_node("../GPU_Device")
@@ -150,6 +153,12 @@ func set_global_params(total_boid_count, grid_size, dim_x : int, dim_y : int, di
 	grid_dim_x = dim_x
 	grid_dim_y = dim_y
 	grid_dim_z = dim_z
+	
+# ---------------------------------------------------------
+# Provide a reference to the density texture already set in Renderer
+# ---------------------------------------------------------
+func set_density_texture(texture_ref :RID ) -> void:
+	density_texture_3D = texture_ref
 
 # ---------------------------------------------------------
 # Validate inputs
@@ -406,8 +415,9 @@ func _allocate_sorting_buffers(grid_cell_count : int) -> void:
 	zero_vec.resize(cell_count * 2)  # two ints per cell
 	rd.buffer_update(cell_mapping_buffer, 0, mapping_byte_size, zero_vec.to_byte_array())
 
+
 # ---------------------------------------------------------
-# Build RDUniform descriptors for all GPU buffers
+# Build RDUniform descriptors for all GPU buffers/textures/etc
 # ---------------------------------------------------------
 func _build_uniform_descriptors() -> void:
 
@@ -505,3 +515,12 @@ func _build_uniform_descriptors() -> void:
 	u_cell_mapping.binding = 15
 	u_cell_mapping.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	u_cell_mapping.add_id(cell_mapping_buffer)
+	
+	# ---------------------------------------------------------
+	# density image
+	# ---------------------------------------------------------
+	
+	u_density_image_3D = RDUniform.new()
+	u_density_image_3D.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
+	u_density_image_3D.binding = 16
+	u_density_image_3D.add_id(density_texture_3D)

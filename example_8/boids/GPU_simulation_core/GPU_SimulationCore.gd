@@ -42,6 +42,10 @@ var grid_dim_y : int = 0
 var grid_dim_z : int = 0
 var grid_cell_count : int = 0
 
+# ---------------------------------------------------------
+# Sibling nodes
+# ---------------------------------------------------------
+var renderer : Node
 
 # ---------------------------------------------------------
 # Child nodes (GPU subsystems)
@@ -52,6 +56,7 @@ var pass_grid_assign : Node
 var pass_grid_sort : Node
 var pass_grid_mapping : Node
 var pass_behaviour : Node
+var pass_density3D : Node
 var pass_integration : Node
 var pass_test : Node
 var pass_debug : Node
@@ -66,10 +71,11 @@ func _ready() -> void:
 	gpu_device = get_node("GPU_Device")
 	gpu_buffers = get_node("GPU_Buffers")
 	pass_debug = get_node("GPU_Debug")
+	renderer = get_node("../Renderer")
 	
 	# Wait until GPU_Device and GPU_Buffers report ready
 	await _wait_for_gpu_backend()
-	
+
 	rd = gpu_device.rd
 
 	# All compute passes live under GPU_Passes
@@ -80,6 +86,7 @@ func _ready() -> void:
 	pass_grid_sort = passes.get_node("Pass_GridSort")
 	pass_grid_mapping = passes.get_node("Pass_GridMapping")
 	pass_behaviour = passes.get_node("Pass_Behaviour")
+	pass_density3D = passes.get_node("Pass_Density3D")
 	pass_integration = passes.get_node("Pass_Integration")
 
 	# NOTE:
@@ -183,6 +190,11 @@ func initialise_simulation(grid_cell_size : float, swarm_params : Array) -> void
 
 	print("Grid dims: ", grid_dim_x, " x ", grid_dim_y, " x ", grid_dim_z)
 	print("Grid cell count: ", grid_cell_count)
+	
+	# ---------------------------------------------------------
+	# Set Renderer 3D density texture size and provide the rendering device
+	# ---------------------------------------------------------
+	renderer.set_density_texture_size(rd, Vector3i(grid_dim_x, grid_dim_y, grid_dim_z))
 
 	# ---------------------------------------------------------
 	# Upload CPU-side data to GPU_Buffers
@@ -192,6 +204,7 @@ func initialise_simulation(grid_cell_size : float, swarm_params : Array) -> void
 	gpu_buffers.set_swarm_params(swarm_params)
 	gpu_buffers.set_global_params(total_boids, grid_cell_size, grid_dim_x, grid_dim_y, grid_dim_z)
 	gpu_buffers.set_index_and_cell_ids()
+	gpu_buffers.set_density_texture(renderer.density_texture_3d)
 
 	# Allocate and upload all GPU buffers
 	gpu_buffers.build_all_buffers(grid_cell_count)
@@ -207,7 +220,8 @@ func simulate(delta : float) -> void:
 	"""
 	Runs the full GPU simulation pipeline for one frame.
 
-	No CPU reads occur here.
+	No CPU read (should) occur here.
+	
 	The GPU writes directly into the storage buffers owned by GPU_Buffers.
 	Other systems (Renderer, Debug tools) can read these buffers on demand.
 	"""
@@ -218,6 +232,7 @@ func simulate(delta : float) -> void:
 	# Execute compute passes in order
 	# Each pass builds its own uniform set and dispatches its own pipeline
 	# ---------------------------------------------------------
+	
 	#pass_test.run(rd, compute_list, workgroup_count)
 	pass_grid_assign.run(rd, compute_list, workgroup_count)
 
@@ -228,7 +243,8 @@ func simulate(delta : float) -> void:
 	pass_grid_sort.run(rd, compute_list, workgroup_count, workgroups_cells)
 
 	pass_grid_mapping.run(rd, compute_list, workgroup_count)
-	#pass_behaviour.run(rd, compute_list, workgroup_count)
+	pass_behaviour.run(rd, compute_list, workgroup_count)
+	pass_density3D.run(rd, compute_list, workgroup_count)
 	#pass_integration.run(rd, compute_list, workgroup_count)
 
 	# ---------------------------------------------------------
@@ -254,13 +270,14 @@ func simulate(delta : float) -> void:
 	rd.compute_list_end()
 	rd.submit()
 
-	# Sync if CPU needs readback (debug, renderer)
+	# Ideally we only sync if CPU needs readback (debug, renderer)
+	# TODO: figure out how to render via GPU
 	# Keep this in temporarily while we are building the pipeline but eventually:
 	# 	Future Improvement 1 — Fence-based scheduling (Vulkan-style)
 	#	Future Improvement 2 — Double-buffered GPU job
 	#	Future Improvement 4 — GPU job queue
 
-	rd.sync()
+	#rd.sync()
 
 	# Optional debug readback
-	pass_debug.run()
+	#pass_debug.run()

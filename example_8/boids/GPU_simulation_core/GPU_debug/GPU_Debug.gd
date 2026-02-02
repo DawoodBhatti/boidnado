@@ -161,13 +161,13 @@ func _print_all() -> void:
 
 	#_print_positions()
 	#_print_velocities()
-	#_print_swarm_params()
+	_print_swarm_params()
 	#_print_boid_to_swarm()
 	#_print_global_params()
 	#_print_boid_indices()
 	#_print_cell_ids()
 	#_print_cell_counts_and_offsets()
-	_print_cell_mappings()
+	#_print_cell_mappings()
 
 
 func _print_positions() -> void:
