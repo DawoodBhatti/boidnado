@@ -21,6 +21,7 @@ var gpu_core : Node
 var config_handler : Node
 var swarms : Array = []
 
+var run_count : int = 0 
 
 # Raw config filenames (strings)
 var swarm_constants_files  : Array = ["orbital_boids.json", "loose_migration.json"]
@@ -108,6 +109,10 @@ func _initialise_swarms():
 # ---------------------------------------------------------
 
 func _process(delta):
+	
 	# Only run the GPU simulation.
 	# Renderer updates itself via GPU-driven shader.
-	gpu_core.simulate(delta)
+	if true:
+		#Single frame run?
+		gpu_core.simulate(delta)
+		run_count += 1

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bhl4jme2u0gdq"]
+
+[ext_resource type="Script" uid="uid://dehml44h54iop" path="res://example_9/boids/GPU_simulation_core/GPU_buffers/GPU_Buffers.gd" id="1_tf74a"]
+
+[node name="GPU_Buffers" type="Node"]
+script = ExtResource("1_tf74a")

@@ -73,10 +73,11 @@ func _init_pass(rd : RenderingDevice) -> void:
 	# Single uniform set for this pass
 	uniform_set_mapping_rid = rd.uniform_set_create(
 		[
+			u_global,        # 8
 			u_cell_counts,   # 13
 			u_cell_offsets,  # 14
-			u_cell_mapping,  # 15
-			u_global         # 8
+			u_cell_mapping   # 15
+
 		],
 		gpu_device.grid_mapping_rid,
 		0

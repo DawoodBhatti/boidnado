@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dj52ucmy5hh1e"
+path="res://.godot/imported/pass1.glsl-608332dc3453bc126187981a9a7cdb70.res"
+
+[deps]
+
+source_file="res://example_9/proof_of_concept_many/pass1.glsl"
+dest_files=["res://.godot/imported/pass1.glsl-608332dc3453bc126187981a9a7cdb70.res"]
+
+[params]
+

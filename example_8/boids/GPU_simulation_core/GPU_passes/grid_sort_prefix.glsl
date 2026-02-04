@@ -43,6 +43,7 @@ void main() {
 
     // Out-of-range threads do nothing
     if (cell >= uint(max_cells)) {
+	
         return;
     }
 
@@ -54,5 +55,9 @@ void main() {
         sum += cell_counts[i];
     }
 
-    cell_offsets[cell] = sum;
+	if (cell_counts[0]==1510){
+		cell_offsets[cell] = 111;
+	}
+	
+ //   cell_offsets[cell] = sum;
 }

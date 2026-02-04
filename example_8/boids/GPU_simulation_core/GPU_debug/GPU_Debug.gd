@@ -9,14 +9,15 @@ Responsibilities:
  - Optionally print debug info using a debug switch
 """
 
-var gpu_buffers
+var gpu_buffers : Node
+var renderer : Node 
 
 # Toggle printing
 @export var debug_print_enabled: bool = true
 
 
 # ---------------------------------------------------------
-# Stored CPU-side mirrors of GPU buffers
+# Stored CPU-side mirrors of GPU buffers/textures
 # ---------------------------------------------------------
 
 var positions_x : PackedFloat32Array
@@ -42,29 +43,47 @@ var cell_counts : PackedInt32Array
 var cell_offsets : PackedInt32Array
 var cell_mappings: PackedInt32Array
 
+var density_texture_data : PackedFloat32Array
+
 
 func _ready() -> void:
 	gpu_buffers = get_node("../GPU_Buffers")
+	renderer  = get_node("../../Renderer3D")
 
 
 # ---------------------------------------------------------
 # PUBLIC ENTRY POINT — called once per frame
 # ---------------------------------------------------------
 func run() -> void:
-	_read_positions()
-	_read_velocities()
-	_read_swarm_params()
-	_read_boid_to_swarm()
-	_read_global_params()
-	_read_boid_indices()
-	_read_cell_ids()
-	_read_cell_counts_and_offsets()
-	_read_cell_mappings()
-
 
 	if debug_print_enabled:
-		_print_all()
-
+		
+		_read_positions()
+		#_print_positions()
+				
+		_read_velocities()
+		#_print_velocities()
+		
+		_read_swarm_params()
+		#_print_swarm_params()
+		
+		_read_boid_to_swarm()
+		#_print_boid_to_swarm()
+		
+		_read_global_params()
+		#_print_global_params()
+		
+		_read_boid_indices()
+		#_print_boid_indices()
+		
+		_read_cell_ids()
+		#_print_cell_ids()
+		
+		_read_cell_counts_and_offsets()
+		_print_cell_counts_slice(0,4096)
+		
+		_read_cell_mappings()
+		_print_cell_mappings_slice(0,4096)
 
 
 # ---------------------------------------------------------
@@ -75,6 +94,11 @@ func _read_positions() -> void:
 	var x_bytes : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.positions_x_buffer)
 	var y_bytes : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.positions_y_buffer)
 	var z_bytes : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.positions_z_buffer)
+	
+	if debug_print_enabled:
+		print("DEBUG READBACK: positions_x bytes = ", x_bytes.size())
+		print("DEBUG READBACK: positions_y bytes = ", y_bytes.size())
+		print("DEBUG READBACK: positions_z bytes = ", z_bytes.size())
 
 	positions_x = x_bytes.to_float32_array()
 	positions_y = y_bytes.to_float32_array()
@@ -152,22 +176,7 @@ func _read_cell_mappings() -> void:
 	var mapping_bytes : PackedByteArray = gpu_buffers.rd.buffer_get_data(gpu_buffers.cell_mapping_buffer)
 	cell_mappings = mapping_bytes.to_int32_array()
 	
-# ---------------------------------------------------------
-# PRINT HELPERS (only run if debug_print_enabled)
-# ---------------------------------------------------------
-
-func _print_all() -> void:
-	print("\nGPU_Debug: GPU → CPU readback")
-
-	#_print_positions()
-	#_print_velocities()
-	_print_swarm_params()
-	#_print_boid_to_swarm()
-	#_print_global_params()
-	#_print_boid_indices()
-	#_print_cell_ids()
-	#_print_cell_counts_and_offsets()
-	#_print_cell_mappings()
+	
 
 
 func _print_positions() -> void:
@@ -247,47 +256,56 @@ func _print_cell_ids() -> void:
 	print("\n[Cell Id Buffer (sorted)]")
 	print(sorted_cell_ids)
 
+func _print_cell_counts_slice(start_index: int, end_index: int) -> void:
+	# Clamp to valid range
+	start_index = clamp(start_index, 0, cell_counts.size())
+	end_index = clamp(end_index, 0, cell_counts.size())
 
-func _print_cell_counts_and_offsets() -> void:
+	if end_index <= start_index:
+		print("\n[Cell Counts] Invalid slice: ", start_index, " to ", end_index)
+		return
+
 	print("\n[Cell Counts Buffer] (", cell_counts.size(), " cells)")
-	var limit_counts : int = min(32, cell_counts.size())
-	var sum_counts : int = 0
-	for i in range(limit_counts):
-		sum_counts += cell_counts[i]
-		print("  cell_counts[", i, "] = ", cell_counts[i])
-	print("  (partial sum of first ", limit_counts, " cells) = ", sum_counts)
+	print("Slice: ", start_index, " → ", end_index, "  (length: ", end_index - start_index, ")")
 
-	print("\n[Cell Offsets Buffer] (", cell_offsets.size(), " cells)")
-	var limit_offsets : int = min(32, cell_offsets.size())
-	for i in range(limit_offsets):
-		print("  cell_offsets[", i, "] = ", cell_offsets[i])
+	var sum_counts := 0
+	for i in range(start_index, end_index):
+		var v := cell_counts[i]
+		sum_counts += v
+		
+		#only print non-zero values:
+		if v != 0:
+			print("  cell_counts[", i, "] = ", v)
 
-func _print_cell_mappings() -> void:
-	print("\n[Cell Mappings Buffer] (", cell_mappings.size() / 2, " cells)")
+	print("  Slice sum = ", sum_counts)
 
-	var cell_count : int = cell_mappings.size() / 2
-	var limit : int = 32
-	if cell_count < limit:
-		limit = cell_count
 
-	for i in range(limit):
-		var start : int = cell_mappings[i * 2 + 0]
-		var end   : int = cell_mappings[i * 2 + 1]
-		var length : int = end - start
+func _print_cell_mappings_slice(start_index: int, end_index: int) -> void:
+	# Each cell uses 2 ints: [start, end]
+	var cell_count: int = cell_mappings.size() / 2
 
-		var count_from_counts : int = -1
-		if i < cell_counts.size():
-			count_from_counts = cell_counts[i]
+	# Clamp to valid range
+	start_index = clamp(start_index, 0, cell_count)
+	end_index = clamp(end_index, 0, cell_count)
 
-		var offset_from_offsets : int = -1
-		if i < cell_offsets.size():
-			offset_from_offsets = cell_offsets[i]
+	if end_index <= start_index:
+		print("\n[Cell Mappings] Invalid slice: ", start_index, " to ", end_index)
+		return
 
-		print(
-			"  cell[", i, "]  ",
-			"start=", start,
-			", end=", end,
-			", len=", length,
-			"   | counts[i]=", count_from_counts,
-			", offsets[i]=", offset_from_offsets
-		)
+	print("\n[Cell Mappings Buffer] (", cell_count, " cells)")
+	print("Slice: ", start_index, " → ", end_index, "  (length: ", end_index - start_index, ")")
+
+	var total_length: int = 0
+
+	for i in range(start_index, end_index):
+		var start_val: int = cell_mappings[i * 2 + 0]
+		var end_val: int   = cell_mappings[i * 2 + 1]
+		var length: int    = end_val - start_val
+
+		total_length += length
+
+		# Only print non-zero ranges
+		if length != 0:
+			print("  cell_mappings[", i, "]  start=", start_val, ", end=", end_val, ", len=", length)
+
+	print("  Slice total length = ", total_length)

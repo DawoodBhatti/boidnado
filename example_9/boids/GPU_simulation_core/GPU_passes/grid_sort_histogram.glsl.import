@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://kgkvcnfmx5tf"
+path="res://.godot/imported/grid_sort_histogram.glsl-bb763714b5e0f390ec64d77144939efd.res"
+
+[deps]
+
+source_file="res://example_9/boids/GPU_simulation_core/GPU_passes/grid_sort_histogram.glsl"
+dest_files=["res://.godot/imported/grid_sort_histogram.glsl-bb763714b5e0f390ec64d77144939efd.res"]
+
+[params]
+

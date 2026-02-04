@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://dt2mrhbwd1ngd"]
+
+[ext_resource type="Script" uid="uid://dv12i2r5upo26" path="res://example_8/boids/renderer/Renderer3D.gd" id="1_u572v"]
+
+[node name="Renderer3D" type="Node"]
+script = ExtResource("1_u572v")
+
+[node name="SliceQuad" type="MeshInstance3D" parent="."]

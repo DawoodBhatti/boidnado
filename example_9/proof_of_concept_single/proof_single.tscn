@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dktqfsixxxysc"]
+
+[ext_resource type="Script" uid="uid://b76aefw8g7wcl" path="res://example_9/proof_of_concept_single/proof.gd" id="1_p2k6o"]
+
+[node name="Proof" type="Node3D"]
+script = ExtResource("1_p2k6o")

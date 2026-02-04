@@ -34,6 +34,7 @@ var rd : RenderingDevice
 # ---------------------------------------------------------
 var test_compute            : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/test_compute.glsl")
 var grid_assign             : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_assign.glsl")
+var grid_clear              : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_clear.glsl")
 var grid_sort_histogram     : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort_histogram.glsl")
 var grid_sort_prefix        : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort_prefix.glsl")
 var grid_sort_scatter       : Resource      = load("res://example_8/boids/GPU_simulation_core/GPU_passes/grid_sort_scatter.glsl")
@@ -47,6 +48,7 @@ var density_3D              : Resource      = load("res://example_8/boids/GPU_si
 # ---------------------------------------------------------
 var test_compute_shader_rid
 var grid_assign_rid
+var grid_clear_rid
 var grid_sort_histogram_rid
 var grid_sort_prefix_rid
 var grid_sort_scatter_rid
@@ -61,6 +63,7 @@ var density_3D_rid
 # ---------------------------------------------------------
 var test_compute_pipeline
 var grid_assign_pipeline
+var grid_clear_pipeline
 var grid_sort_histogram_pipeline
 var grid_sort_prefix_pipeline
 var grid_sort_scatter_pipeline
@@ -106,6 +109,10 @@ func _load_shaders() -> void:
 	var assign_spirv = grid_assign.get_spirv()
 	grid_assign_rid = rd.shader_create_from_spirv(assign_spirv)
 
+	# Grid Clear
+	var clear_spirv = grid_clear.get_spirv()
+	grid_clear_rid = rd.shader_create_from_spirv(clear_spirv)
+
 	# Grid Sort
 	var sort_histogram_spirv = grid_sort_histogram.get_spirv()
 	var sort_prefix_spirv = grid_sort_prefix.get_spirv()
@@ -142,7 +149,10 @@ func _create_compute_pipelines() -> void:
 
 	# Grid Assign
 	grid_assign_pipeline = rd.compute_pipeline_create(grid_assign_rid)
-
+	
+	# Grid Clear
+	grid_clear_pipeline = rd.compute_pipeline_create(grid_clear_rid)
+	
 	# Grid Sort
 	grid_sort_histogram_pipeline = rd.compute_pipeline_create(grid_sort_histogram_rid)
 	grid_sort_prefix_pipeline = rd.compute_pipeline_create(grid_sort_prefix_rid)
@@ -161,6 +171,7 @@ func _create_compute_pipelines() -> void:
 	# test before proceeding
 	assert(test_compute_pipeline.is_valid())
 	assert(grid_assign_pipeline.is_valid())
+	assert(grid_clear_pipeline.is_valid())
 	assert(grid_sort_histogram_pipeline.is_valid())
 	assert(grid_sort_prefix_pipeline.is_valid())
 	assert(grid_sort_scatter_pipeline.is_valid())

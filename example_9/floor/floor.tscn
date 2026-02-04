@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3 uid="uid://ck75o3l7fbxhx"]
+
+[ext_resource type="Script" uid="uid://dt8q3xnmehimb" path="res://example_9/floor/floor.gd" id="1_b00oo"]
+
+[node name="Floor" type="Node3D"]
+script = ExtResource("1_b00oo")
+floor_width = null
+floor_depth = null
+floor_height = null
+
+[node name="Mesh3D" type="MeshInstance3D" parent="."]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]

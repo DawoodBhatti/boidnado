@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://b3edsad64fqdm" path="res://example_8/boids/config_handler/ConfigHandler.tscn" id="3_kkob3"]
 [ext_resource type="PackedScene" uid="uid://b3oifk5o86gmr" path="res://example_8/boids/swarm_manager/SwarmManager.tscn" id="4_2pxjq"]
 [ext_resource type="PackedScene" uid="uid://c8npgp3uqofho" path="res://example_8/boids/GPU_simulation_core/GPU_SimulationCore.tscn" id="4_kkob3"]
-[ext_resource type="PackedScene" uid="uid://dt2mrhbwd1ngd" path="res://example_8/boids/renderer/renderer.tscn" id="5_mk0lk"]
+[ext_resource type="PackedScene" uid="uid://dt2mrhbwd1ngd" path="res://example_8/boids/renderer/renderer3D.tscn" id="5_mk0lk"]
 
 [node name="Boids" type="Node3D"]
 script = ExtResource("1_jrus8")
@@ -15,4 +15,4 @@ script = ExtResource("1_jrus8")
 
 [node name="GPU_SimulationCore" parent="." instance=ExtResource("4_kkob3")]
 
-[node name="Renderer" parent="." instance=ExtResource("5_mk0lk")]
+[node name="Renderer3D" parent="." instance=ExtResource("5_mk0lk")]

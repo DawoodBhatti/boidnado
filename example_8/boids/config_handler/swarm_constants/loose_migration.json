@@ -1,6 +1,6 @@
 {
   "swarm_name": "loose_migration",
-  "boid_count": 350,
+  "boid_count": 10,
   "sight_radius": 5.0,
   "FOV_angle_deg": 30,
   "cage_radius": 40.0,

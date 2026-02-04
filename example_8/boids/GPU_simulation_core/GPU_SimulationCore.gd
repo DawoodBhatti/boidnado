@@ -53,6 +53,7 @@ var renderer : Node
 var gpu_device : Node              # GPU_Device (RenderingDevice + pipelines)
 var gpu_buffers : Node             # GPU_Buffers (storage buffers + RDUniform descriptors)
 var pass_grid_assign : Node
+var pass_grid_clear : Node
 var pass_grid_sort : Node
 var pass_grid_mapping : Node
 var pass_behaviour : Node
@@ -71,18 +72,21 @@ func _ready() -> void:
 	gpu_device = get_node("GPU_Device")
 	gpu_buffers = get_node("GPU_Buffers")
 	pass_debug = get_node("GPU_Debug")
-	renderer = get_node("../Renderer")
+	renderer = get_node("../Renderer3D")
 	
 	# Wait until GPU_Device and GPU_Buffers report ready
 	await _wait_for_gpu_backend()
 
 	rd = gpu_device.rd
+	
+	await _wait_for_renderer()
 
 	# All compute passes live under GPU_Passes
 	var passes : Node = get_node("GPU_Passes")
 
 	pass_test = passes.get_node("Pass_TestPass")
 	pass_grid_assign = passes.get_node("Pass_GridAssign")
+	pass_grid_clear = passes.get_node("Pass_GridClear")
 	pass_grid_sort = passes.get_node("Pass_GridSort")
 	pass_grid_mapping = passes.get_node("Pass_GridMapping")
 	pass_behaviour = passes.get_node("Pass_Behaviour")
@@ -104,6 +108,18 @@ func _ready() -> void:
 func _wait_for_gpu_backend() -> void:
 	# Simple polling loop; usually resolves in 1 frame
 	while not gpu_device.is_initialised or not gpu_buffers.is_initialised:
+		await get_tree().process_frame
+
+	# Optional: strong asserts once the loop exits
+	assert(gpu_device.rd != null)
+
+
+# ---------------------------------------------------------
+# Helper: wait until renderer fully initialised
+# ---------------------------------------------------------
+func _wait_for_renderer() -> void:
+	# Simple polling loop; usually resolves in 1 frame
+	while not renderer.is_initialised:
 		await get_tree().process_frame
 
 	# Optional: strong asserts once the loop exits
@@ -215,6 +231,8 @@ func initialise_simulation(grid_cell_size : float, swarm_params : Array) -> void
 
 # ---------------------------------------------------------
 # MAIN SIMULATION STEP
+	# Execute compute passes in order
+	# Each pass builds its own uniform set and dispatches its own pipeline
 # ---------------------------------------------------------
 func simulate(delta : float) -> void:
 	"""
@@ -226,25 +244,27 @@ func simulate(delta : float) -> void:
 	Other systems (Renderer, Debug tools) can read these buffers on demand.
 	"""
 
-	var compute_list : int = rd.compute_list_begin()
+	#NOTE:
+	# Storage buffers in Godot have no guaranteed write→read visibility between dispatches.
+	# A later pass may read the old contents even if an earlier pass wrote new data.
+	# Only textures, sync barriers, or a deliberate one‑frame delay give reliable visibility.
+	# This means we might move to textures if we want to keep the sync between pipeliens in the same compute pass
+	#TODO:figure our solution...
 
-	# ---------------------------------------------------------
-	# Execute compute passes in order
-	# Each pass builds its own uniform set and dispatches its own pipeline
-	# ---------------------------------------------------------
-	
+	var compute_list : int = rd.compute_list_begin()
+	var workgroups_cells : int = ceil(grid_cell_count / float(local_group_size))
+
 	#pass_test.run(rd, compute_list, workgroup_count)
 	pass_grid_assign.run(rd, compute_list, workgroup_count)
 
-	# GridSort needs:
-	#   - workgroups over boids
-	#   - workgroups over cells
-	var workgroups_cells : int = ceil(grid_cell_count / float(local_group_size))
-	pass_grid_sort.run(rd, compute_list, workgroup_count, workgroups_cells)
 
-	pass_grid_mapping.run(rd, compute_list, workgroup_count)
-	pass_behaviour.run(rd, compute_list, workgroup_count)
-	pass_density3D.run(rd, compute_list, workgroup_count)
+	#new compute list for each pass - debug only
+	pass_grid_clear.run(rd, compute_list, workgroups_cells)
+	pass_grid_sort.run(rd, compute_list, workgroup_count, workgroups_cells)
+	pass_grid_mapping.run(rd, compute_list, workgroups_cells)  # per cell
+	
+	pass_behaviour.run(rd, compute_list, workgroup_count)      # per boid
+	#pass_density3D.run(rd, compute_list, workgroups_cells)     # per cell
 	#pass_integration.run(rd, compute_list, workgroup_count)
 
 	# ---------------------------------------------------------
@@ -277,7 +297,7 @@ func simulate(delta : float) -> void:
 	#	Future Improvement 2 — Double-buffered GPU job
 	#	Future Improvement 4 — GPU job queue
 
-	#rd.sync()
+	rd.sync()
 
 	# Optional debug readback
-	#pass_debug.run()
+	pass_debug.run()

@@ -86,9 +86,10 @@ func _init_passes(rd : RenderingDevice) -> void:
 	# ---------------------------------------------------------
 	uniform_set_histogram_rid = rd.uniform_set_create(
 		[
+			u_global,       # binding 8
 			u_cell_id,      # binding 11
 			u_cell_counts,  # binding 13
-			u_global        # binding 8
+
 		],
 		gpu_device.grid_sort_histogram_rid,
 		0

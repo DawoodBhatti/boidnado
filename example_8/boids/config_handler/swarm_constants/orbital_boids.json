@@ -1,6 +1,6 @@
 {
   "swarm_name": "orbital_boids",
-  "boid_count": 150,
+  "boid_count": 1500,
   "sight_radius": 5.0,
   "FOV_angle_deg": 100,
   "cage_radius": 40.0,

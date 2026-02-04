@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://duruojwv8q1kp"
+path="res://.godot/imported/write_texture.glsl-63d4b6302de4941192acd048a2f6cd7a.res"
+
+[deps]
+
+source_file="res://example_9/proof_of_concept_many/write_texture.glsl"
+dest_files=["res://.godot/imported/write_texture.glsl-63d4b6302de4941192acd048a2f6cd7a.res"]
+
+[params]
+
