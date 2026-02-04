@@ -9,6 +9,8 @@ func _ready() -> void:
 	Player.position.y += 1.5
 	print("Example 10: moving from line representation to point cloud with density colouring")
 	
+	#we might also need to rethink the visualisation part...?
+	
 	#"disable multiple swarms for now until we can find the bug")
 	# We have a working simulation and are looking to flesh out the visual element of it
 	# moved away from lines to point cloud representation and density based colouring
