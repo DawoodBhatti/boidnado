@@ -9,6 +9,7 @@ var RAM: Label
 var Draws: Label
 var BoidCount: Label
 
+@onready var GPUSimCore :Node = get_node("../Boids/GPU_SimulationCore")
 @onready var logger: Node = $Logging
 
 func _ready() -> void:
@@ -31,15 +32,15 @@ func _update_stats() -> void:
 	var mem_peak: float = OS.get_static_memory_peak_usage() / (1024.0 * 1024.0)
 	var cpu_time: float = Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
 	var draw_calls: int = Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
-	#var number_boids: int = SwarmManager.boid_count
+	var number_boids: int = GPUSimCore.total_boids
 	
 
 	FPS.text = "FPS: %d" % fps
 	CPU.text = "CPU frame time: %.2f ms" % cpu_time
 	RAM.text = "RAM: %.2f MB (peak %.2f MB)" % [mem, mem_peak]
 	Draws.text = "Draw Calls: %d" % draw_calls
-	#BoidCount.text = "Boid Count: %d" % number_boids
-	BoidCount.text = "Boid Count: N/A"
+	BoidCount.text = "Boid Count: %d" % number_boids
+	
 	
 	# FPS color
 	if fps < 55:

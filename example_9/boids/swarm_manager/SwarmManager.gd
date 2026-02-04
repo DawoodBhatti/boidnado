@@ -17,23 +17,27 @@ Responsibilities:
  - Do NOT read GPU buffers
 """
 
-var gpu_core : Node
-var config_handler : Node
-var swarms : Array = []
+var gpu_core: Node
+var config_handler: Node
+var swarms: Array = []
 
-var run_count : int = 0 
+# Simulation control state
+var is_paused: bool = false
+var is_stepping: bool = false   # true while "advance_simulation" button is held
+var run_count: int = 0
 
-# Raw config filenames (strings)
-var swarm_constants_files  : Array = ["orbital_boids.json", "loose_migration.json"]
+# Raw config filenames
+var swarm_constants_files: Array = ["orbital_boids.json", "loose_migration.json"]
 var behaviour_weights_files: Array = ["orbital_boids.json", "loose_migration.json"]
-var behaviour_masks_files  : Array = ["default.json", "default.json"]
+var behaviour_masks_files: Array = ["default.json", "default.json"]
 var interaction_masks_files: Array = ["default.json", "default.json"]
-var swarm_mesh_files       : Array = ["cylinderboid.obj", "cylinderboid.obj"]
+var swarm_mesh_files: Array = ["cylinderboid.obj", "cylinderboid.obj"]
 
-# Set grid size
-var grid_cell_size : float = 5.0
+# Grid size
+var grid_cell_size: float = 6.0
 
-func _ready():
+
+func _ready() -> void:
 	gpu_core = get_node("../GPU_SimulationCore")
 	config_handler = get_node("../ConfigHandler")
 
@@ -42,11 +46,41 @@ func _ready():
 
 
 # ---------------------------------------------------------
+# PUBLIC CONTROL API
+# ---------------------------------------------------------
+
+func pause_simulation() -> void:
+	is_paused = true
+	is_stepping = false
+	print("Simulation paused")
+
+
+func resume_simulation() -> void:
+	is_paused = false
+	is_stepping = false
+	print("Simulation resumed")
+
+
+func advance_simulation_start() -> void:
+	# Called when button is pressed
+	is_paused = false
+	is_stepping = true
+	print("Advance simulation: stepping enabled")
+
+
+func advance_simulation_stop() -> void:
+	# Called when button is released
+	is_stepping = false
+	is_paused = true
+	print("Advance simulation: stepping stopped")
+
+
+# ---------------------------------------------------------
 # DISCOVER SWARM CHILDREN
 # ---------------------------------------------------------
 
-func _discover_swarms():
-	for child in get_children():
+func _discover_swarms() -> void:
+	for child: Node in get_children():
 		if child.name.begins_with("Swarm"):
 			swarms.append(child)
 			print("SwarmManager: detected swarm:", child.name)
@@ -56,36 +90,28 @@ func _discover_swarms():
 # INITIALISE SWARMS
 # ---------------------------------------------------------
 
-func _initialise_swarms():
-	var swarm_params_gpu : Array = []
-	var offset := 0
+func _initialise_swarms() -> void:
+	var swarm_params_gpu: Array = []
+	var offset: int = 0
 
-	for i in range(len(swarms)):
-		var swarm = swarms[i]
+	for i: int in range(swarms.size()):
+		var swarm: Node = swarms[i]
 
-		# --- Load raw JSON dictionaries ---
-		var constants  = config_handler.extract_swarm_constants(swarm_constants_files[i])
-		var weights    = config_handler.extract_behaviour_weights(behaviour_weights_files[i])
-		var masks      = config_handler.extract_behaviour_masks(behaviour_masks_files[i])
-		var interact   = config_handler.extract_interaction_masks(interaction_masks_files[i])
+		var constants: Dictionary = config_handler.extract_swarm_constants(swarm_constants_files[i])
+		var weights: Dictionary = config_handler.extract_behaviour_weights(behaviour_weights_files[i])
+		var masks: Dictionary = config_handler.extract_behaviour_masks(behaviour_masks_files[i])
+		var interact: Dictionary = config_handler.extract_interaction_masks(interaction_masks_files[i])
 
-		# --- Extract CPU‑side metadata ---
-		var count      = constants.get("boid_count", 100)
-		var mesh_path  = constants.get("boid_mesh_path", "biggerboid.obj")
-		var colour_arr = constants.get("boid_colour", [1,1,1,1])
+		var count: int = constants.get("boid_count", 100)
+		var colour_arr: Array = constants.get("boid_colour", [1,1,1,1])
 
-		# Load mesh
-		var mesh = config_handler.extract_mesh(swarm_mesh_files[i])
+		var mesh: Mesh = config_handler.extract_mesh(swarm_mesh_files[i])
 		swarm.mesh = mesh
-
-		# Assign colour (renderer will use this)
 		swarm.colour = Color(colour_arr[0], colour_arr[1], colour_arr[2], colour_arr[3])
 
-		# Assign index range for GPU-driven rendering
 		swarm.start_index = offset
 		swarm.count = count
 
-		# --- Build GPU parameter block ---
 		swarm_params_gpu.append({
 			"start": offset,
 			"count": count,
@@ -94,13 +120,10 @@ func _initialise_swarms():
 			"masks": masks,
 			"interactions": interact
 		})
-		
-		
+
 		offset += count
 
-	# --- Hand off to GPU simulation core ---
-	# --- but wait one process frame until children have finished initialising
-	await get_tree().process_frame 
+	await get_tree().process_frame
 	gpu_core.initialise_simulation(grid_cell_size, swarm_params_gpu)
 
 
@@ -108,11 +131,36 @@ func _initialise_swarms():
 # MAIN UPDATE LOOP
 # ---------------------------------------------------------
 
-func _process(delta):
-	
-	# Only run the GPU simulation.
-	# Renderer updates itself via GPU-driven shader.
-	if run_count < 200000:
-		#Single frame run?
+func _process(delta: float) -> void:
+	# If paused and not stepping, do nothing
+	if is_paused and not is_stepping:
+		return
+
+	# If stepping, run exactly one frame per _process tick
+	if is_stepping:
 		gpu_core.simulate(delta)
-		run_count += 1
+		return
+
+	# Normal continuous simulation
+	gpu_core.simulate(delta)
+
+
+func _input(event: InputEvent) -> void:
+	# --- Pause ---
+	if event.is_action_pressed("pause"):
+		pause_simulation()
+		return
+
+	# --- Resume ---
+	if event.is_action_pressed("resume"):
+		resume_simulation()
+		return
+
+	# --- Advance Simulation (hold to step) ---
+	if event.is_action_pressed("advance_simulation"):
+		advance_simulation_start()
+		return
+
+	if event.is_action_released("advance_simulation"):
+		advance_simulation_stop()
+		return
