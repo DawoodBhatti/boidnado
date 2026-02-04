@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://cxh1c0vd67q26"]
+
+[ext_resource type="Shader" uid="uid://bvtxu57t3j46s" path="res://example_10/floor/shaders/chessboard.gdshader" id="1_vwi8m"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_vwi8m")
+shader_parameter/color_white = Color(1, 0.74509805, 0.12941177, 0.39215687)
+shader_parameter/color_grey = Color(1, 0.20392157, 0.52156866, 0.39215687)
+shader_parameter/squares = 12.0

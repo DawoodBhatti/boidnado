@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4qss8a1aimix"]
+
+[ext_resource type="Script" uid="uid://c2uuoa5effeuf" path="res://example_10/boids/renderer (not in use yet)/Renderer3D.gd" id="1_1r8qq"]
+
+[node name="Renderer3D" type="Node"]
+script = ExtResource("1_1r8qq")
+
+[node name="SliceQuad" type="MeshInstance3D" parent="."]

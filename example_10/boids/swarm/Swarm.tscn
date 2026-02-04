@@ -1,0 +1,12 @@
+[gd_scene load_steps=4 format=3 uid="uid://b3p630v40yp2u"]
+
+[ext_resource type="Script" uid="uid://drsf8mvocybtx" path="res://example_10/boids/swarm/Swarm.gd" id="1_cn5jc"]
+[ext_resource type="PackedScene" uid="uid://oaghi2ix7jrp" path="res://example_10/boids/swarm/cage/Cage.tscn" id="2_tb8xf"]
+[ext_resource type="PackedScene" uid="uid://cywk6hesp1kja" path="res://example_10/boids/swarm/visual_debug/VisualDebug.tscn" id="3_h3ugq"]
+
+[node name="Swarm" type="Node3D"]
+script = ExtResource("1_cn5jc")
+
+[node name="Cage" parent="." instance=ExtResource("2_tb8xf")]
+
+[node name="VisualDebug" parent="." instance=ExtResource("3_h3ugq")]

@@ -1,0 +1,36 @@
+[gd_scene load_steps=9 format=3 uid="uid://da1lnphj8bkkj"]
+
+[ext_resource type="Script" uid="uid://b6d55vxckbcca" path="res://example_10/boids/GPU_simulation_core/GPU_passes/Pass_GridAssign.gd" id="1_h4i16"]
+[ext_resource type="Script" uid="uid://dnittp3umtogc" path="res://example_10/boids/GPU_simulation_core/GPU_passes/Pass_GridClear.gd" id="2_vfhmt"]
+[ext_resource type="Script" uid="uid://24lxnlo287xg" path="res://example_10/boids/GPU_simulation_core/GPU_passes/Pass_GridSort.gd" id="3_emjg2"]
+[ext_resource type="Script" uid="uid://bh0x87umfc5x5" path="res://example_10/boids/GPU_simulation_core/GPU_passes/Pass_GridMapping.gd" id="4_eg0hq"]
+[ext_resource type="Script" uid="uid://cyqs0nl3gowhs" path="res://example_10/boids/GPU_simulation_core/GPU_passes/Pass_Behaviour.gd" id="5_64i2c"]
+[ext_resource type="Script" uid="uid://1hjq2704vx2u" path="res://example_10/boids/GPU_simulation_core/GPU_passes/Pass_Integration.gd" id="6_yuq3r"]
+[ext_resource type="Script" uid="uid://b6bxr11gimv0q" path="res://example_10/boids/GPU_simulation_core/GPU_passes/Pass_Density3D.gd" id="7_j55c1"]
+[ext_resource type="Script" uid="uid://b7sstplqokh4v" path="res://example_10/boids/GPU_simulation_core/GPU_passes/Pass_TestPass.gd" id="8_mh8nb"]
+
+[node name="GPU_Passes" type="Node"]
+
+[node name="Pass_GridAssign" type="Node" parent="."]
+script = ExtResource("1_h4i16")
+
+[node name="Pass_GridClear" type="Node" parent="."]
+script = ExtResource("2_vfhmt")
+
+[node name="Pass_GridSort" type="Node" parent="."]
+script = ExtResource("3_emjg2")
+
+[node name="Pass_GridMapping" type="Node" parent="."]
+script = ExtResource("4_eg0hq")
+
+[node name="Pass_Behaviour" type="Node" parent="."]
+script = ExtResource("5_64i2c")
+
+[node name="Pass_Integration" type="Node" parent="."]
+script = ExtResource("6_yuq3r")
+
+[node name="Pass_Density3D" type="Node" parent="."]
+script = ExtResource("7_j55c1")
+
+[node name="Pass_TestPass" type="Node" parent="."]
+script = ExtResource("8_mh8nb")

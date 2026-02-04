@@ -1,0 +1,18 @@
+[gd_scene load_steps=6 format=3 uid="uid://dee0ea0m5io3r"]
+
+[ext_resource type="Script" uid="uid://byajtk6cdagmp" path="res://example_10/boids/GPU_simulation_core/GPU_SimulationCore.gd" id="1_0w3fv"]
+[ext_resource type="PackedScene" uid="uid://b2dln5x7as0q2" path="res://example_10/boids/GPU_simulation_core/GPU_device/GPU_device.tscn" id="2_pyo6h"]
+[ext_resource type="PackedScene" uid="uid://buawcoii24ypj" path="res://example_10/boids/GPU_simulation_core/GPU_buffers/GPU_Buffers.tscn" id="3_kvtqq"]
+[ext_resource type="PackedScene" uid="uid://da1lnphj8bkkj" path="res://example_10/boids/GPU_simulation_core/GPU_passes/GPU_Passes.tscn" id="4_jtx6i"]
+[ext_resource type="PackedScene" uid="uid://de3d2wknj0331" path="res://example_10/boids/GPU_simulation_core/GPU_debug/GPU_Debug.tscn" id="5_2hkip"]
+
+[node name="GPU_SimulationCore" type="Node"]
+script = ExtResource("1_0w3fv")
+
+[node name="GPU_Device" parent="." instance=ExtResource("2_pyo6h")]
+
+[node name="GPU_Buffers" parent="." instance=ExtResource("3_kvtqq")]
+
+[node name="GPU_Passes" parent="." instance=ExtResource("4_jtx6i")]
+
+[node name="GPU_Debug" parent="." instance=ExtResource("5_2hkip")]

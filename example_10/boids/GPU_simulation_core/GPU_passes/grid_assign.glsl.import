@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://blicotqwlwrpq"
+path="res://.godot/imported/grid_assign.glsl-3747a91ff45311abb04ff7a21b67f528.res"
+
+[deps]
+
+source_file="res://example_10/boids/GPU_simulation_core/GPU_passes/grid_assign.glsl"
+dest_files=["res://.godot/imported/grid_assign.glsl-3747a91ff45311abb04ff7a21b67f528.res"]
+
+[params]
+

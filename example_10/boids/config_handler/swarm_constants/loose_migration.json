@@ -1,0 +1,12 @@
+{
+  "swarm_name": "loose_migration",
+  "boid_count": 100,
+  "sight_radius": 5.0,
+  "FOV_angle_deg": 80,
+  "cage_radius": 40.0,
+  "max_speed": 25.0,
+  "desired_separation": 0.5,
+
+  "boid_mesh_path": "res://example_5/boids/models/biggerboid.obj",
+  "boid_colour": [1.0,0.0,1.0,0.5],
+}

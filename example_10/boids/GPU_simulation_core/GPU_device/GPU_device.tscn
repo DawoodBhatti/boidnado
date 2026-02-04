@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b2dln5x7as0q2"]
+
+[ext_resource type="Script" uid="uid://miel2up0wndt" path="res://example_10/boids/GPU_simulation_core/GPU_device/GPU_Device.gd" id="1_eq832"]
+
+[node name="GPU_Device" type="Node"]
+script = ExtResource("1_eq832")

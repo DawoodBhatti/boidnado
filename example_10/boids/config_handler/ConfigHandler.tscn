@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cgpnepfvlm5xd"]
+
+[ext_resource type="Script" uid="uid://c4mfo2baj5hbr" path="res://example_10/boids/config_handler/ConfigHandler.gd" id="1_rvs1c"]
+
+[node name="ConfigHandler" type="Node"]
+script = ExtResource("1_rvs1c")

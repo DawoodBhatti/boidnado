@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://b2al8wgdriopn"
+path="res://.godot/imported/grid_sort_prefix.glsl-57cb190ff69e552ff2873461ea747750.res"
+
+[deps]
+
+source_file="res://example_10/boids/GPU_simulation_core/GPU_passes/grid_sort_prefix.glsl"
+dest_files=["res://.godot/imported/grid_sort_prefix.glsl-57cb190ff69e552ff2873461ea747750.res"]
+
+[params]
+

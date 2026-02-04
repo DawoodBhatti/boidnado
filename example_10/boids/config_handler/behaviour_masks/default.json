@@ -1,0 +1,7 @@
+  {
+  "alignment": true,
+  "cohesion": true,
+  "separation": true,
+  "wander": true,
+  "boundary": true,
+  }

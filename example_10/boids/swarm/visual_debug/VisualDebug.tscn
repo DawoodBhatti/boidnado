@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cywk6hesp1kja"]
+
+[ext_resource type="Script" uid="uid://dfi0oxke5lxj1" path="res://example_10/boids/swarm/visual_debug/VisualDebug.gd" id="1_6dgkj"]
+
+[node name="VisualDebug" type="Node3D"]
+script = ExtResource("1_6dgkj")

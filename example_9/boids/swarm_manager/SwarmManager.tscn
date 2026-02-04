@@ -9,3 +9,4 @@ script = ExtResource("1_etgc0")
 [node name="Swarm1" parent="." instance=ExtResource("2_qmsau")]
 
 [node name="Swarm2" parent="." instance=ExtResource("2_qmsau")]
+visible = false
