@@ -1,2 +1,2 @@
 # boidnado
-experiments with boids, compute shaders and marching cubes
+experiments with 3D boids, compute shaders and marching cubes
