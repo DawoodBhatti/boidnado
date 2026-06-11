@@ -1,6 +1,4 @@
-# boidnado
-experiments with 3D boids, compute shaders and marching cubes (coming soon)
-
+# boidnado: experiments with 3D boids using compute shaders
 
 
 **pipeline plans:** optimise GPU pipeline and compute shader to handle higher numbers on screen. Can we hit 100k boids with 60fps? might need to learn some C++...
