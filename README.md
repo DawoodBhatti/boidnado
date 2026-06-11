@@ -5,4 +5,4 @@ pipeline plans: optimise GPU pipeline and compute shader to handle higher number
 
 boid plans: core structure is in place now and we can begin experimenting with the behaviour rules. can we simulate the visuals for a tornado using similar rules???
 
-rendering plan: can we sample density at points in space of the boids (probably in another GPU pass) and render this using the MC algorithm?
+rendering plan: can we sample density at points in space of the boids (probably in another GPU pass) and render this in realtime using the MC algorithm?
